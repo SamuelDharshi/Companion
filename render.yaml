@@ -66,3 +66,8 @@ services:
         sync: false
       - key: CLASSIFIER_MODEL
         sync: false
+      # Chainlink CRE (see cre/README.md). Leave ORCHESTRATOR as keeper until a CRE simulation has passed.
+      - key: ORCHESTRATOR
+        value: keeper
+      - key: CRE_TOKEN
+        sync: false

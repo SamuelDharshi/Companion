@@ -73,6 +73,7 @@ const AGENT_URL = TESTNET ? process.env.E2E_AGENT_URL || "http://127.0.0.1:8788"
 // Local runs use fixed tokens so they never depend on a developer's .env. A testnet run uses the real ones.
 const E2E_ADMIN = TESTNET ? dotenv.DEV_ADMIN_TOKEN : "e2e-admin-token-0123456789abcdef";
 const E2E_INTERNAL = TESTNET ? dotenv.INTERNAL_TOKEN : "e2e-internal-token-0123456789abcdef";
+const E2E_CRE = TESTNET ? dotenv.CRE_TOKEN : "e2e-cre-token-0123456789abcdef0123";
 if (TESTNET && (!E2E_ADMIN || !E2E_INTERNAL)) {
   console.error("A testnet run needs DEV_ADMIN_TOKEN and INTERNAL_TOKEN in .env (and the same ones in the running services).");
   process.exit(1);
@@ -316,6 +317,8 @@ try {
         KEEPER_ENABLED: "false",
         DEV_ADMIN_TOKEN: E2E_ADMIN,
         INTERNAL_TOKEN: E2E_INTERNAL,
+        CRE_TOKEN: E2E_CRE,
+        ORCHESTRATOR: "cre",
         LOG_LEVEL: "warn",
       },
     });
@@ -657,6 +660,34 @@ try {
     raviFlagged.reasonName === "NETWORK_FLAG",
     `a report follows the contact, however it is typed (${raviFlagged.reasonName})`,
   );
+
+  // ---- What the Chainlink CRE workflow is allowed to ask of the agent.
+  log("11c/15", "Chainlink CRE: the workflow's endpoints answer only its token, and each action re-checks the chain");
+  const cre = (body, token = E2E_CRE) =>
+    fetch(`${AGENT_URL}/cre/apply`, {
+      method: "POST",
+      headers: { "content-type": "application/json", ...(token ? { "x-cre-token": token } : {}) },
+      body: JSON.stringify(body),
+    });
+  assert((await cre({ action: "repage", id: String(raviFlagged.holdId) }, "")).status !== 200, "no token: refused");
+  assert((await cre({ action: "repage", id: String(raviFlagged.holdId) }, "wrong-token-wrong-token-wrong")).status === 401, "wrong token: refused");
+  if (E2E_CRE) {
+    const bad = await cre({ action: "payEverybody", id: "1" });
+    assert(bad.status === 400, "an action outside the three allowed is refused");
+    const due = await (await cre({ action: "runAllowance", id: String(familyId) })).json();
+    assert(due.ok === true && due.skipped === "not due", "an allowance that is not due is not sent");
+    await sleep(1500);
+    const again = await (await cre({ action: "repage", id: String(raviFlagged.holdId) })).json();
+    assert(again.ok === true, `a still-open hold can be reminded about (${again.skipped ?? `${again.pagedDevices} devices`})`);
+    const early = await (await cre({ action: "expireHold", id: String(raviFlagged.holdId) })).json();
+    assert(early.ok === true, `an expiry request is checked against the chain's clock (${early.skipped ?? "expired, time was up"})`);
+    const settled = await (await cre({ action: "expireHold", id: String(raviSend.holdId) })).json();
+    assert(settled.skipped === "not open", "a hold that is already settled is left alone");
+    const status = await (await fetch(`${AGENT_URL}/cre/status`, { headers: { "x-cre-token": E2E_CRE } })).json();
+    assert(status.orchestrator === "cre", "the agent reports that CRE is orchestrating, with its own timer as standby");
+  } else {
+    ok("(CRE_TOKEN is not set in .env, so the authorised calls were not exercised)");
+  }
 
   log("12/15", "Silent SOS: one tap pauses everything and tells Kavya, whatever the scammer wants");
   const freezeInfo = await api(`/freeze/digest?familyId=${familyId}`);
