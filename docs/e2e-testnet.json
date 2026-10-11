@@ -1,0 +1,85 @@
+{
+  "ranAt": "2026-10-11T18:41:00.810Z",
+  "network": "Monad testnet",
+  "chainId": 10143,
+  "vault": "0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87",
+  "passed": true,
+  "confirmedTransactions": 19,
+  "overallMedianMs": 1225,
+  "overallMinMs": 651,
+  "overallMaxMs": 1532,
+  "byEndpoint": {
+    "/onboard/guardian": {
+      "count": 1,
+      "minMs": 963,
+      "medianMs": 963,
+      "maxMs": 963
+    },
+    "/family/envelope": {
+      "count": 1,
+      "minMs": 1141,
+      "medianMs": 1141,
+      "maxMs": 1141
+    },
+    "/fund": {
+      "count": 1,
+      "minMs": 1227,
+      "medianMs": 1227,
+      "maxMs": 1227
+    },
+    "/withdraw": {
+      "count": 7,
+      "minMs": 920,
+      "medianMs": 1226,
+      "maxMs": 1532
+    },
+    "/hold/resolve": {
+      "count": 1,
+      "minMs": 1049,
+      "medianMs": 1049,
+      "maxMs": 1049
+    },
+    "/check/request": {
+      "count": 1,
+      "minMs": 1317,
+      "medianMs": 1317,
+      "maxMs": 1317
+    },
+    "/check/prove": {
+      "count": 1,
+      "minMs": 1194,
+      "medianMs": 1194,
+      "maxMs": 1194
+    },
+    "/report": {
+      "count": 1,
+      "minMs": 1384,
+      "medianMs": 1384,
+      "maxMs": 1384
+    },
+    "/freeze": {
+      "count": 1,
+      "minMs": 1429,
+      "medianMs": 1429,
+      "maxMs": 1429
+    },
+    "/unfreeze": {
+      "count": 1,
+      "minMs": 1322,
+      "medianMs": 1322,
+      "maxMs": 1322
+    },
+    "/notes": {
+      "count": 2,
+      "minMs": 1203,
+      "medianMs": 1225,
+      "maxMs": 1225
+    },
+    "/feedback/submit": {
+      "count": 1,
+      "minMs": 651,
+      "medianMs": 651,
+      "maxMs": 651
+    }
+  }
+}
