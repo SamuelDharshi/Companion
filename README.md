@@ -11,9 +11,62 @@ Built for **Monad Metropolis** · **Track: Consumer Products & Payments** · Mon
 
 **Bounties:** Agora Cross-Border Payments · Mera "Best Mera-Powered UX" · Mera "One Passkey, Many Keys" · Best Community Team. See [`docs/SUBMISSION.md`](docs/SUBMISSION.md).
 
+**Contents**
+
+1. [The idea in one minute](#1-the-idea-in-one-minute)
+2. [The problem, in one scene](#2-the-problem-in-one-scene)
+3. [The cast](#3-the-cast)
+4. [How it works, the short version (sequence diagram)](#4-how-it-works-the-short-version)
+5. [How it works, flow by flow](#5-how-it-works-flow-by-flow)
+6. [What each person sees (screen by screen)](#6-what-each-person-sees)
+7. [How to use it](#7-how-to-use-it)
+8. [What it does, and what it does not](#8-what-it-does-and-what-it-does-not)
+9. [Why it needs Monad](#9-why-it-needs-monad)
+10. [Architecture](#10-architecture)
+11. [Running it](#11-running-it)
+12. [Deployed addresses](#12-deployed-addresses)
+13. [Track and bounties](#13-track-and-bounties)
+14. [Honest limits](#14-honest-limits)
+15. [Business model](#15-business-model)
+
 ---
 
-## The problem, in one scene
+## 1. The idea in one minute
+
+Most scams against international students are not clever. They are **isolating**. The caller
+says "do not tell anyone, your phone is being monitored," and the student, alone and afraid in
+another time zone, pays. The money is the smaller half of the harm. The silence is the bigger half.
+
+Companion attacks the silence.
+
+1. **A parent funds a family account.** Kavya, in Chennai, approves one weekly "envelope" with
+   a single Face ID: how much, how often, which payees are already trusted (rent, the
+   university), and what size of payment is unusual.
+2. **The allowance runs itself.** Every week the agent settles the money across borders and
+   the student, Arjun, sees it arrive. Nobody opens an app.
+3. **Anything unusual pauses first.** If Arjun sends money to a *new* person, an unusual
+   amount, or a payee other families have reported, the money does not go to that person. It
+   moves into **escrow inside the contract**, and Kavya's phone is paged.
+4. **Kavya decides, with her own face.** One tap on **Stop it** returns the money to Arjun.
+   One tap on **Allow** sends it on. The decision is checked **inside the smart contract**
+   against her passkey, so no server, no company and no scammer can override her.
+5. **If nobody answers, the money comes home.** After the hold window, anyone can expire the
+   hold, and the money returns to Arjun. A keeper does it automatically.
+
+Two extra tools cover what the vault cannot see:
+
+- **Check on Arjun**: Kavya taps once, and Arjun's phone proves with one Face ID that it is
+  really him, right now. This answers voice-clone calls ("Mom, it's me, send money").
+- **Silent SOS**: for scams paid with gift cards or Zelle, which never touch Companion. One
+  discreet tap pauses everything in the app, pages Kavya, and opens a private video call, so
+  Arjun is no longer alone on that line.
+
+**The one-sentence version:** the scam only works while the family is kept apart, so
+Companion puts the family *inside* the payment.
+
+---
+
+## 2. The problem, in one scene
 
 It is 11pm in Bloomington, Indiana. Arjun, an F-1 student from Chennai, gets a call from a
 spoofed number. The caller says he is an ICE officer, quotes Arjun's real SEVIS details, and
@@ -39,7 +92,474 @@ and Indiana. Companion is the cross-border version, enforced by a neutral contra
 
 ---
 
-## What it does
+## 3. The cast
+
+```
+   KAVYA (guardian)                  ARJUN (student)                 THE SCAMMER
+   Chennai, India                    Bloomington, USA                 anywhere
+   ─────────────────                 ─────────────────                ────────────
+   Funds the family.                 Receives the weekly              Wants Arjun alone,
+   Signs the weekly                  allowance. Sends money           scared and quick.
+   envelope. Decides                 to rent, school, friends.        Needs Arjun to pay
+   every held payment               Can raise a Silent SOS.          before anyone can
+   with her own face.                                                 say "wait."
+        │                                 │                              │
+        │ one passkey (Face ID)           │ one passkey (Face ID)        │
+        ▼                                 ▼                              ▼
+   ┌────────────────────────────────────────────────────────────────────────┐
+   │                         COMPANION AGENT + VAULT                         │
+   │  Runs the allowance, holds anything unusual, pages Kavya, fails safe.   │
+   │  The rules and the guardian decide. The agent executes and connects.    │
+   └────────────────────────────────────────────────────────────────────────┘
+```
+
+| Who | Role in the system | What they hold |
+|---|---|---|
+| **Kavya**, the parent | Guardian. Funds the family, signs the envelope, resolves holds. | One passkey (her Face ID) |
+| **Arjun**, the student | Spends and receives. Proves it is him on request. | One passkey, plus a hidden duress key |
+| **The relayer** | Pays gas so neither person ever needs a token. | Gas only. **No spending power.** |
+| **The agent** | Runs the allowance on schedule, expires stale holds, pages the parent. | No keys that can move family money |
+| **The vault** (`ThunaiVault`) | Keeps each family's balance, escrow and rules. | The family's money, accounted per family |
+
+---
+
+## 4. How it works, the short version
+
+The most important flow: **a scammer's payment is stopped by a parent on another continent,
+inside the time the scammer is still on the line.**
+
+```
+ Arjun's phone        Relayer          ThunaiVault        Agent / Pager       Kavya's phone
+      │                  │            (Monad testnet)           │                  │
+      │  1. "Send $2,000 to a new address"                       │                  │
+      │  sign intent     │                  │                    │                  │
+      │  (Face ID once)  │                  │                    │                  │
+      │─────────────────>│                  │                    │                  │
+      │                  │ 2. submit intent │                    │                  │
+      │                  │─────────────────>│                    │                  │
+      │                  │                  │ 3. rules: new payee│                  │
+      │                  │                  │    -> money goes to│                  │
+      │                  │                  │    ESCROW, not the │                  │
+      │                  │                  │    payee. HoldOpened                  │
+      │                  │                  │───────────────────>│                  │
+      │                  │                  │                    │ 4. page Kavya    │
+      │                  │                  │                    │   (push / link)  │
+      │                  │                  │                    │─────────────────>│
+      │ "Held for safety. We've asked Kavya."                    │                  │
+      │<─────────────────│                  │                    │                  │
+      │                  │                  │                    │   5. Kavya opens │
+      │                  │                  │                    │      the hold and│
+      │                  │                  │                    │      taps STOP IT│
+      │                  │                  │                    │      (Face ID)   │
+      │                  │<─────────────────────────────────────────────────────────│
+      │                  │ 6. submit her passkey assertion       │                  │
+      │                  │─────────────────>│                    │                  │
+      │                  │                  │ 7. P256 precompile │                  │
+      │                  │                  │    (0x0100) checks │                  │
+      │                  │                  │    HER passkey.    │                  │
+      │                  │                  │    Hold CANCELLED, │                  │
+      │                  │                  │    money -> Arjun  │                  │
+      │ "Stopped by Kavya. Your money is back."                  │                  │
+      │<─────────────────│                  │                    │                  │
+      │                  │                  │                    │                  │
+
+   Nobody answered?  After the hold window, ANYONE can call expireHold().
+   The money returns to Arjun on its own. The payee never receives it.
+```
+
+Three properties make this trustworthy:
+
+- **The payee receives nothing at any point.** The money sits in escrow inside the vault.
+- **Only Kavya's passkey can release it.** The contract verifies her WebAuthn assertion with the
+  P256 precompile. The relayer only carries the signature; it cannot forge one.
+- **Silence is safe.** The default outcome of "nobody answered" is *the money goes home*.
+
+---
+
+## 5. How it works, flow by flow
+
+### 5.1 Setting up a family (two devices, two Face IDs)
+
+```
+   ARJUN'S PHONE                                       KAVYA'S PHONE
+   ─────────────                                       ─────────────
+   1. Open the app, choose "I'm the student"
+   2. Enter a name
+   3. Face ID  ──> creates Arjun's passkey
+        │          (one passkey, three keys derived from it:
+        │           account key, notes key, duress key)
+        ▼
+   4. Family is created onchain
+   5. App shows an invite:
+        [ Share on WhatsApp ]  [ Copy invite link ]
+        │
+        └──────── invite link over WhatsApp ───────────>  6. Kavya opens the link
+                                                           7. Enters her name
+                                                           8. [ Accept with Face ID ]
+                                                              creates Kavya's passkey
+                                                           9. She sets the envelope:
+                                                              • Every week:  $150
+                                                              • Ask me above: $500
+                                                              • Trusted payees (rent...)
+                                                              [ Approve once with Face ID ]
+                                                                    │
+   10. Arjun's screen flips from "Waiting"  <───────────────────────┘
+       to a home screen with the next
+       allowance date.
+```
+
+After this, setup never comes up again. If Arjun loses his phone, signing in with the same
+passkey restores everything, because the family lives onchain and not on a server.
+
+### 5.2 The weekly allowance (nobody touches the app)
+
+```
+                         every Sunday (the envelope's cadence)
+                                      │
+                                      ▼
+   ┌──────────────┐   due?   ┌──────────────────┐  fund + settle  ┌────────────────────┐
+   │ Agent keeper │─────────>│  ThunaiVault     │────────────────>│ Home balance (CTK) │
+   │ runAllowance │          │  checks envelope │                 └─────────┬──────────┘
+   └──────────────┘          │  signed by Kavya │                           │ swap
+                             │  not expired     │                           ▼
+                             └──────────────────┘            ┌──────────────────────────┐
+                                                             │ Agora Instant Settlement │
+                                                             │ CTK -> AUSD, same tx     │
+                                                             │ (fallback: pre-funded    │
+                                                             │  float until whitelisted)│
+                                                             └─────────────┬────────────┘
+                                                                           ▼
+                                                  Arjun's spendable balance (AUSD)
+                                                  "The weekly allowance from Kavya arrived."
+```
+
+The envelope Kavya signed is the only authority the agent has. It can run exactly that
+amount at exactly that cadence until the envelope expires, and it advances the schedule
+*before* settling so a retry can never pay twice.
+
+### 5.3 What happens when Arjun sends money
+
+Every send goes through the same deterministic rules. **No AI is involved in the decision.**
+
+```
+                          Arjun taps  [ Send ]
+                                 │
+                 signed intent: who, how much, what for
+                                 │
+                                 ▼
+                    ┌─────────────────────────┐
+                    │ Is the family paused?   │── yes ──> HOLD  (reason: paused)
+                    └────────────┬────────────┘
+                                 │ no
+                                 ▼
+                    ┌─────────────────────────┐        ┌──────────────────────────┐
+                    │ Is the payee on Kavya's │── yes ─>│ Amount over her cap?     │
+                    │ signed schedule?        │        └───────┬────────────┬─────┘
+                    └────────────┬────────────┘            yes │            │ no
+                                 │ no                          ▼            ▼
+                                 │                          HOLD         PAY NOW
+                                 ▼                       (over cap)   (straight through)
+                    ┌─────────────────────────┐
+                    │ Have other families     │── yes ──> HOLD  (reason: reported by network)
+                    │ reported this payee?    │
+                    └────────────┬────────────┘
+                                 │ no
+                                 ▼
+                    ┌─────────────────────────┐
+                    │ Is a "Check on Arjun"   │── yes ──> HOLD  (reason: check not answered)
+                    │ still unanswered?       │
+                    └────────────┬────────────┘
+                                 │ no
+                                 ▼
+                       HOLD  (reason: new payee)
+```
+
+The order only decides *which sentence the app shows*. Every branch except "pay now" holds
+the money. Payees on Kavya's signed schedule are immune to network flags, so a rent payment
+is never blocked because a stranger reported the same address.
+
+### 5.4 The life of a hold
+
+```
+                         ┌──────────────────────────┐
+   Arjun's send  ──────> │  HOLD OPEN               │  money in escrow in the vault
+                         │  (default window 30 min) │  the payee gets nothing
+                         └───────┬──────────┬───────┘
+                                 │          │
+              Kavya, Face ID     │          │      nobody answers by the deadline
+                                 │          │
+                   ┌─────────────┘          └─────────────┐
+                   │                                      │
+        ┌──────────▼──────────┐                ┌──────────▼───────────┐
+        │ STOP IT             │                │ EXPIRED              │
+        │ status: CANCELLED   │                │ anyone (or the       │
+        │ money -> Arjun      │                │ keeper) calls        │
+        └─────────────────────┘                │ expireHold()         │
+                                               │ money -> Arjun       │
+        ┌─────────────────────┐                └──────────────────────┘
+        │ ALLOW               │
+        │ status: RELEASED    │       Only STOP IT, ALLOW and EXPIRE can end a hold.
+        │ money -> payee      │       Only ALLOW sends money to the payee, and it
+        └─────────────────────┘       needs Kavya's passkey, verified onchain.
+```
+
+After Kavya taps **Stop it**, she can tap **Report this payee**. The contract accepts a report
+only for a hold that a guardian really cancelled, and only with that same guardian's passkey, so
+one report costs one real family's Face ID. `ScamSignals` then raises the hold level for every
+other family that tries to pay the same handle (the handle is hashed first; it is pseudonymous,
+not anonymous).
+
+### 5.5 Check on Arjun (answering a voice clone)
+
+A cloned voice can say "Mom, it's me." It cannot hold Arjun's phone and his face.
+
+```
+   KAVYA'S PHONE                    VAULT                     ARJUN'S PHONE
+   ─────────────                    ─────                     ─────────────
+   taps [ Check on Arjun ]
+        │ request a check
+        │─────────────────────────> check opened
+        │                           (a fresh challenge, a nonce)
+        │                                   │ Arjun's app shows
+        │                                   │─────────────────────> "Kavya wants to check
+        │                                   │ the request            you're OK"
+        │                                   │                        [ Face ID ]
+        │                                   │                        ["I can't talk freely"]
+        │                                   │<───────────────────── signed assertion,
+        │                           P256 precompile verifies         bound to this exact
+        │                           it came from ARJUN'S passkey     challenge
+        │<───────────────────────── "Signed on his own phone"
+        │                           with the real verification time
+        ▼
+   While the check is unanswered, new-payee sends from Arjun
+   show the reason "check not answered" (see 5.3).
+```
+
+"I can't talk freely" is a second button on Arjun's check screen. It reads like an ordinary
+option to anyone looking over his shoulder, but it uses the duress key to freeze every outflow
+at once and tell his family, without showing anything alarming on his screen.
+
+### 5.6 Silent SOS (money that never touches the app)
+
+Companion cannot see a gift card bought with Arjun's own bank card. So Silent SOS breaks the
+isolation instead of the payment.
+
+```
+   ARJUN (on the scam call)                                  KAVYA
+   ────────────────────────                                  ─────
+   taps  [ Someone is asking me for money ]
+        │
+        │ one discreet tap, signed with his hidden DURESS key
+        ▼
+   ┌─────────────────────────────────────────────────────────────┐
+   │ sos(): the vault FREEZES the family.                        │
+   │   • every send now holds, whatever the amount or payee      │
+   │   • event SOSRaised(reason code) is recorded onchain        │
+   └──────────────┬──────────────────────────────┬───────────────┘
+                  │                              │
+                  ▼                              ▼
+   Arjun's screen:                    Kavya is paged at once
+   "Your family has been told.        ┌──────────────────────────┐
+    You can hang up."                 │ [ Video call Arjun now ] │ private room
+   [ Video call Kavya ]  <──────────> │ [ Lift the pause ]       │ (Face ID)
+   Optional: what is the caller       └──────────────────────────┘
+   asking for? gift card / Zelle /
+   wire / crypto / other
+```
+
+Only Kavya's passkey can lift the pause. Arjun's duress key can freeze but never unfreeze.
+Even if a scammer forces Arjun to "lift" it on his own phone, the contract refuses.
+
+### 5.7 One passkey, three keys
+
+Arjun and Kavya each have exactly one Face ID. Behind it sit three independent keys, derived
+from the passkey's PRF output with our own salt for each one:
+
+```
+                          ONE FACE ID  (WebAuthn passkey, PRF extension)
+                                         │
+              ┌──────────────────────────┼───────────────────────────┐
+              ▼                          ▼                           ▼
+   ┌─────────────────────┐   ┌─────────────────────┐   ┌──────────────────────┐
+   │ thunai/acct         │   │ thunai/notes        │   │ thunai/duress        │
+   │ secp256k1 account   │   │ AES-256-GCM key     │   │ secp256k1 freeze key │
+   │ signs withdraw      │   │ encrypts the        │   │ registered onchain;  │
+   │ intents             │   │ family's private    │   │ can freeze, can      │
+   │                     │   │ notes; ciphertext   │   │ NEVER unfreeze       │
+   │                     │   │ stored onchain      │   │                      │
+   └─────────────────────┘   └─────────────────────┘   └──────────────────────┘
+
+   ALSO, on every action that must be checked by the contract, the same Face ID
+   produces a P256 assertion over the action hash. One tap, two proofs:
+        • Mera's PRF output  -> unlocks the keys above
+        • WebAuthn assertion -> verified onchain by the 0x0100 precompile
+```
+
+Why it matters: no seed phrase, no extension, no wallet app. A new phone plus the same
+passkey brings the whole family back, because everything of value is derived from, or stored
+under, that passkey.
+
+### 5.8 The whole system on one page
+
+```
+   ┌───────────────┐            ┌───────────────┐
+   │ Arjun's phone │            │ Kavya's phone │      Expo app, one codebase,
+   │  (student)    │            │  (guardian)   │      two roles, served as a
+   └───────┬───────┘            └───────┬───────┘      website at /app
+           │ signed intents             │ passkey assertions
+           └─────────────┬──────────────┘
+                         ▼
+                ┌─────────────────┐       gas only, no spending power
+                │    RELAYER      │───────────────────────────────┐
+                │ eth_sendRawTx   │                               │
+                │ Sync (receipt   │                               │
+                │ in same call)   │                               ▼
+                └────────┬────────┘                ┌─────────────────────────────┐
+                         │                         │      MONAD TESTNET (10143)  │
+                         │   reads + events        │                             │
+   ┌─────────────────┐   │                         │   ThunaiVault               │
+   │ AGENT           │◄──┘                         │    envelopes, balances,     │
+   │  allowance      │────────────────────────────>│    escrow holds, SOS        │
+   │  keeper         │   runAllowance /            │   P256 precompile (0x0100)  │
+   │  classifier     │   expireHold                │    verifies passkeys        │
+   │  pager          │                             │   ScamSignals               │
+   └───────┬─────────┘                             │    network reports          │
+           │                                       │   Agora Instant Settlement  │
+           ▼                                       │    (swap built, switched    │
+   WhatsApp link / web push                        │     off until whitelisted)  │
+   to Kavya's phone                                └─────────────────────────────┘
+```
+
+### 5.9 The hard rule about AI
+
+```
+          Something looks wrong
+                  │
+        ┌─────────▼─────────┐        ┌───────────────────────────────┐
+        │ DETERMINISTIC     │        │ OPTIONAL EXPLANATION          │
+        │ CONTRACT RULES    │        │ A language model reads the    │
+        │ open the hold     │──────> │ situation and names the scam  │
+        │ FIRST             │ after  │ script in plain English       │
+        └───────────────────┘        │ ("fake officer")              │
+                                     │ It can label. It cannot move  │
+                                     │ or release money. Ever.       │
+                                     └───────────────────────────────┘
+```
+
+If the model is down, wrong or manipulated, the hold is already open and Kavya still decides.
+
+---
+
+## 6. What each person sees
+
+### Arjun (student)
+
+| Screen | What is on it | What it is for |
+|---|---|---|
+| **Sign-in** | "Companion" with a small "Thunai", a name field, a Face ID button | Create the account with one passkey |
+| **Invite** | **Share on WhatsApp**, **Copy invite link**, a "Waiting" pill | Bring Kavya in |
+| **Home** | Balance, "Next from Kavya: Sunday $150", **Scheduled**, **Activity**, **Send**, **Our network**, **Someone is asking me for money** | The everyday screen |
+| **Send** | **To whom**, **Amount**, **What's this for**, **Are you on a call right now?** (optional, in minutes), **Send** | Pay a person. Before he sends, a card says either "This one pays straight through" or "This is someone new, so we will hold it and ask Kavya first." The call length helps Kavya understand what is happening |
+| **Hold** | "Held for safety. We've asked Kavya." and a live countdown | Watching Kavya decide. Money has not left |
+| **Check** | **Face ID** ("Shows it's really you, right now") and **I can't talk freely** | Answering Kavya's check |
+| **Silent SOS** | "Your family has been told." **Video call Kavya**, and what the caller wants | The one-tap emergency screen |
+| **Details** | Signing session, **Private family notes**, "One passkey, three keys", "Under the hood", "What Companion does and does not do", **Forget this device** | Transparency, for the curious or the judge |
+
+### Kavya (guardian)
+
+| Screen | What is on it | What it is for |
+|---|---|---|
+| **Accept** | Invite code, **Your name**, **Accept with Face ID** | Join the family from the WhatsApp link |
+| **Envelope** | **Every week**, **Ask me above**, trusted payees, **Approve once with Face ID** | Sign the weekly plan once |
+| **Home** | Arjun's status, **Check on Arjun**, **Send money now** (testnet stand-in for the licensed partner), **Families protected** | The overview |
+| **Hold** | The reason in plain words, who, how much, a countdown, **Stop it** and **Allow** (each with Face ID), and after a stop, **Report this payee** | The decision that matters |
+| **Paused** | "Video call Arjun now", **Lift the pause** (Face ID) | After a Silent SOS |
+| **Check** | "Waiting · 12s" turning into "Signed on his own phone, verified onchain" | The voice-clone answer |
+| **Network** | Saves, allowances delivered, checks answered, reports filed. **All counted from the contracts' own events.** | Proof that it is working |
+
+### Words you will not see
+
+No wallet, gas, seed phrase, token, blockchain or chain ID appears on a family's screen. The
+Details screen is the one place that names the machinery, deliberately, for transparency.
+
+---
+
+## 7. How to use it
+
+### 7.1 As a family, step by step
+
+**Arjun, once**
+
+1. Open the Companion site and tap **Open the app** (it opens `/app`).
+2. Enter your name and choose **I'm the student**. Approve with Face ID.
+3. Tap **Share on WhatsApp** and send the invite to your parent.
+4. Wait on the "Waiting" screen. It changes to your home screen as soon as Kavya accepts.
+
+**Kavya, once**
+
+1. Open the invite link on your phone.
+2. Enter your name and tap **Accept with Face ID**.
+3. Set the envelope:
+   - **Every week**: the allowance amount.
+   - **Ask me above**: the size of payment you want to be asked about.
+   - Trusted payees: rent, school fees, anyone you already know.
+4. Tap **Approve once with Face ID**. You will not do this again.
+
+**Every week afterwards**
+
+- The allowance arrives. Nobody does anything.
+
+**When Arjun pays someone**
+
+- A payee on Kavya's list, under her cap: it goes straight through.
+- Anyone else: it is held, and Kavya is paged. She taps **Stop it** or **Allow**.
+
+**When something feels wrong**
+
+- Arjun: tap **Someone is asking me for money**, then hang up. Kavya is told, the app is
+  paused, and a private video call is one tap away.
+- Kavya: tap **Check on Arjun** when a call or message does not feel right. His phone must
+  answer with his own face.
+
+### 7.2 Try it in two minutes (judges and reviewers)
+
+Open on two devices (or two browsers).
+
+1. **Device 1.** Create as the student. Copy the invite link.
+2. **Device 2.** Open the link. Accept as the guardian. Sign the envelope with one Face ID.
+3. **Device 1.** Send a small amount to a brand-new address. Watch it say "Held for safety."
+4. **Device 2.** Open the hold. Tap **Stop it**. Device 1 shows the money back in about a second.
+5. **Device 1.** Tap **Someone is asking me for money**. Device 2 shows the pause and a video call.
+6. **Device 2.** Tap **Check on Arjun**. Device 1 answers with one Face ID.
+7. Open **Our network** or `/traction` and see the same actions counted from the chain.
+
+Passkeys need a secure context, so use `https://` or `localhost`. See
+[`docs/DEMO.md`](docs/DEMO.md) for a three-minute script, the tunnel, and the second-device setup.
+
+### 7.3 As a developer
+
+```bash
+pnpm install
+cp .env.example .env          # fill in: MONAD_RPC_URL, three private keys, and the access tokens
+pnpm contracts:test           # 95 tests, real P256 assertions
+pnpm contracts:deploy         # writes contracts/deployments/10143.json
+pnpm dev                      # relayer + agent + app, with a readiness report
+```
+
+Details are in [Running it](#11-running-it).
+
+### 7.4 If something does not work
+
+| You see | Likely cause | Fix |
+|---|---|---|
+| "Cannot reach Companion's server" | The relayer or agent is not running, or the site's proxy addresses are wrong | Run `pnpm dev`, then open `/relayer/health` on your host |
+| Sign-in fails on a desktop browser | PRF is only returned by passkeys saved in Google Password Manager | Use that passkey type, or use a phone |
+| An account made earlier is "gone" | You opened the app from a different host. A passkey works on one host only | Use the original host. Never change it |
+| "Held" for a payee you trust | The payee is not on the signed schedule | Add it to the envelope next time, or have Kavya tap **Allow** |
+
+---
+
+## 8. What it does and what it does not
 
 The Companion agent runs continuously for each family. It never holds anyone's keys.
 **The rules and the guardian decide; the agent executes, explains and connects.**
@@ -59,25 +579,7 @@ The Companion agent runs continuously for each family. It never holds anyone's k
 deterministic contract rules and are already open before the classifier runs. Releases need a
 guardian's passkey, verified onchain.
 
----
-
-## Why it needs Monad
-
-The rescue has to finish **while the scammer is still on the line.**
-
-- **Fast finality** and `eth_sendRawTransactionSync` give a receipt in the same call, so Arjun's
-  hold and Kavya's Face ID cancel are each confirmed in about a second. There are no pending
-  states in the UI.
-- The **P256 precompile at `0x0100`** (EIP-7951) verifies **a passkey from another continent
-  inside the contract**. No server, no company and no scammer can override Kavya. This is the
-  load-bearing one: without it, the guardian layer would be a server check.
-- **Agora Instant Settlement** is built to replace a 1–3 day SWIFT transfer with a swap that settles in the same transaction. It is switched off until Agora whitelists our vault (see Honest limits).
-
-**Measured on live Monad testnet** (`pnpm e2e:testnet`, 19 confirmed transactions): median **1.23 s**, fastest 0.65 s, slowest 1.53 s. Raw numbers are in [`docs/e2e-testnet.json`](docs/e2e-testnet.json), and the landing page lists every transaction of a recorded run with a link. No other latency figure is quoted anywhere.
-
----
-
-## Honest claims
+### Honest claims
 
 The table we memorised, because judges should probe it.
 
@@ -97,7 +599,32 @@ payment.**
 
 ---
 
-## Architecture
+## 9. Why it needs Monad
+
+The rescue has to finish **while the scammer is still on the line.**
+
+- **Fast finality** and `eth_sendRawTransactionSync` give a receipt in the same call, so Arjun's
+  hold and Kavya's Face ID cancel are each confirmed in about a second. There are no pending
+  states in the UI.
+- The **P256 precompile at `0x0100`** (EIP-7951) verifies **a passkey from another continent
+  inside the contract**. No server, no company and no scammer can override Kavya. This is the
+  load-bearing one: without it, the guardian layer would be a server check.
+- **Agora Instant Settlement** is built to replace a 1–3 day SWIFT transfer with a swap that settles in the same transaction. It is switched off until Agora whitelists our vault (see Honest limits).
+
+```
+   Time from "tap" to "confirmed" on Monad testnet (measured, pnpm e2e:testnet)
+
+   fastest   0.65 s  ████████████
+   median    1.23 s  ███████████████████████
+   slowest   1.53 s  █████████████████████████████
+                     0       0.5      1.0      1.5 s
+```
+
+**Measured on live Monad testnet** (`pnpm e2e:testnet`, 19 confirmed transactions): median **1.23 s**, fastest 0.65 s, slowest 1.53 s. Raw numbers are in [`docs/e2e-testnet.json`](docs/e2e-testnet.json), and the landing page lists every transaction of a recorded run with a link. No other latency figure is quoted anywhere.
+
+---
+
+## 10. Architecture
 
 ```
 ┌──────────── Companion app (Expo: one app, two roles) ─────────────┐
@@ -148,9 +675,27 @@ because escrow *is* the feature. No server key can move it. Outflows need Arjun'
 plus contract rules, and anything held needs Kavya's passkey. *No company can move your money,
 including us.*
 
+```
+   WHO CAN DO WHAT
+   ───────────────────────────────────────────────────────────────────────
+                          Arjun    Kavya    Relayer   Agent    Anyone
+   Send to trusted payee    ✔        ·         ·        ·        ·
+   Send to new payee        opens a hold (money stays in escrow)
+   Release a hold           ·        ✔         ·        ·        ·
+   Cancel a hold            ·        ✔         ·        ·        ·
+   Expire a stale hold      ·        ·         ·        ✔        ✔
+   Run the allowance        ·        ·         ·        ✔        ·
+   Freeze (SOS)             ✔ (duress key)    ·        ·        ·
+   Lift the freeze          ·        ✔         ·        ·        ·
+   Pay gas                  ·        ·         ✔        ·        ·
+```
+
+Money only ever moves to a payee through Arjun's signature plus the rules, or through
+Kavya's passkey. Nothing else can.
+
 ---
 
-## Running it
+## 11. Running it
 
 ```bash
 pnpm install
@@ -185,6 +730,14 @@ APP_URL=https://your-permanent-host/app
 reminder that it must never change). The app also says so on its first screen. [`docs/DEPLOY.md`](docs/DEPLOY.md) covers
 tunnelling it for a phone test and deploying the same site on Render (`render.yaml`, not yet run on Render).
 
+```
+   https://<site>/            the landing page
+   https://<site>/traction    live counts from the chain
+   https://<site>/app         the Companion app (an Expo web build served as static files)
+   https://<site>/relayer/*   proxied to the relayer
+   https://<site>/agent/*     proxied to the agent
+```
+
 ### Access control
 
 The relayer and agent are reachable from the internet, so their sensitive routes are closed by default
@@ -213,6 +766,18 @@ itself, a held payment, Kavya's cancel, the fail-safe expiry, the liveness check
 network warning, Silent SOS, encrypted notes, the lock-down checks and push enrolment. It asserts the
 payee receives nothing at any point. `pnpm e2e:testnet` adds ERC-8004 reputation and runs on the real chain.
 
+```
+   pnpm e2e : the scene it plays, in order
+
+   onboard ─> allowance ─> rent pays itself ─> new payee HELD ─> Kavya CANCELS
+      │                                                              │
+      │                                                              ▼
+   push enrolment <─ lock-down checks <─ encrypted notes <─ Silent SOS <─ liveness
+                                                                         check
+        ... plus the fail-safe expiry and the network warning, with an
+            assertion after every step that the payee received nothing.
+```
+
 ### Judge instructions
 
 Open on two devices. **Device 1:** create as the student → copy the invite link.
@@ -223,7 +788,7 @@ Passkeys need a secure context, so use `https://` or `localhost`. See [`docs/DEM
 
 ---
 
-## Deployed addresses
+## 12. Deployed addresses
 
 `contracts/deployments/10143.json` is the source of truth. Monad testnet, chain 10143.
 
@@ -240,7 +805,7 @@ Passkeys need a secure context, so use `https://` or `localhost`. See [`docs/DEM
 
 ---
 
-## Track and bounties
+## 13. Track and bounties
 
 **Track: Consumer Products & Payments.** An end-user app for a student and a parent, with no crypto
 word on their screens.
@@ -259,7 +824,7 @@ serve both Mera's PRF and the contract's WebAuthn verification.
 
 ---
 
-## Honest limits
+## 14. Honest limits
 
 Stated here rather than discovered by a judge.
 
@@ -286,13 +851,21 @@ Stated here rather than discovered by a judge.
   tested, but with a stand-in for the authenticator's PRF output.
 - **Nothing on the landing page is invented.** Every figure is from a recorded run with a transaction
   hash. The family in that run is fictional.
+- **No real families yet.** The traction page reports zero real families and separates our own test runs.
 
 ---
 
-## Business model
+## 15. Business model
 
 Companion earns a small FX/transfer spread on each allowance — the same model remittance
 companies use. The guardian layer is free, and it is why families stay.
+
+```
+   Kavya funds the allowance ──> small spread on the cross-border transfer ──> Companion revenue
+                                      │
+                                      └── the protection (holds, checks, SOS) costs the family nothing,
+                                          and is the reason they stay
+```
 
 [mea]: https://www.business-standard.com/immigration/75x-jump-in-scams-hits-indians-in-us-amid-visa-crackdown-govt-data-126040600784_1.html
 [wion]: https://www.wionews.com/world/indian-student-in-us-becomes-victim-of-digital-arrest-scam-loses-5-000-to-scammers-posing-as-ice-officers-here-s-what-happened-1749373803522/amp
