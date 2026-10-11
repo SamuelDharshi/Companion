@@ -1,0 +1,47 @@
+{
+  "name": "thunai",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Thunai: a family money agent for Indian parents with a child studying abroad. Monad Metropolis.",
+  "packageManager": "pnpm@10.33.2",
+  "scripts": {
+    "contracts:build": "cd contracts && forge build",
+    "contracts:test": "cd contracts && forge test",
+    "contracts:deploy": "node scripts/deploy.mjs",
+    "abi": "node scripts/sync-abis.mjs",
+    "relayer": "pnpm --filter @thunai/relayer dev",
+    "agent": "pnpm --filter @thunai/agent dev",
+    "app": "pnpm --filter @thunai/app start",
+    "indexer": "pnpm --filter @thunai/indexer dev",
+    "dev": "node scripts/dev.mjs",
+    "web:build": "node scripts/build-web.mjs",
+    "web:dev": "node scripts/build-web.mjs --dev",
+    "test": "pnpm -r test",
+    "parity": "node scripts/check-parity.mjs",
+    "agora:check": "node scripts/agora-check.mjs",
+    "agora:enable": "node scripts/enable-agora.mjs",
+    "e2e": "tsx scripts/e2e.mjs",
+    "e2e:testnet": "tsx scripts/e2e-testnet.mjs",
+    "seed:demo": "node scripts/seed-demo.mjs",
+    "tunnel": "node scripts/tunnel-proxy.mjs",
+    "check:indexer": "node scripts/check-indexer.mjs",
+    "verify": "pnpm contracts:test && pnpm parity && pnpm check:indexer && pnpm typecheck && pnpm e2e",
+    "typecheck": "pnpm -r --filter=!@thunai/indexer typecheck"
+  },
+  "devDependencies": {
+    "viem": "^2.55.10",
+    "typescript": "^5.9.2",
+    "tsx": "^4.21.1",
+    "@noble/curves": "^2.2.0",
+    "@noble/hashes": "^2.2.0",
+    "yaml": "^2.8.1"
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "react-native-worklets": "*",
+        "@react-native/metro-config": "*"
+      }
+    }
+  }
+}
