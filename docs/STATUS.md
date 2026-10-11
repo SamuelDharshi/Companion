@@ -6,7 +6,7 @@ landing page must match one of the three lists below. Last updated after the fin
 ## Verified on Monad testnet
 
 `pnpm e2e:testnet` plays the whole scene against the live relayer and agent with fresh random keys.
-Latest run, 12 Oct 2026, on a **Quicknode** RPC: **18 beats and {{CHECKS}} checks, all passed**, vault
+Latest run, 12 Oct 2026, on a **Quicknode** RPC: **101 checks, all passed**, vault
 `0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87`. (Earlier runs, 16 beats and 86 checks, also passed.)
 Raw numbers: [`e2e-testnet.json`](e2e-testnet.json).
 
@@ -29,8 +29,8 @@ Raw numbers: [`e2e-testnet.json`](e2e-testnet.json).
 | Chainlink CRE endpoints on the agent | `/cre/apply` and `/cre/status` answer only the CRE token, accept three actions, re-check the chain before acting (not due, not open, not yet), and the agent's own timer stays as a standby. |
 | ERC-8004 | Agent #2187 is registered under the team account. A family's guardian account records a verified save; a stranger's key, a different call, a hold nobody stopped and a repeat are all refused. |
 
-**Measured timings (live testnet, latest run, 23 confirmed transactions):** median **1.13 s**, fastest **0.56 s**,
-slowest **1.41 s**. These are how long the relayer waited for each transaction's receipt. Use no other latency
+**Measured timings (live testnet, latest run, 23 confirmed transactions):** median **1.31 s**, fastest **0.65 s**,
+slowest **1.83 s**. These are how long the relayer waited for each transaction's receipt. Use no other latency
 figure anywhere.
 
 **Verified live, read-only:**
@@ -54,7 +54,7 @@ and our fallback survives it. `pnpm parity` proves TypeScript and Solidity agree
 | `pnpm check:indexer` | config, schema and handlers consistent with the contracts |
 | `pnpm typecheck` | 0 errors in every package |
 | `pnpm e2e` (private local chain) | passed, every beat including the new-person and CRE beats |
-| `pnpm e2e:testnet` (live Monad testnet, Quicknode RPC) | passed, 18 beats, {{CHECKS}} checks |
+| `pnpm e2e:testnet` (live Monad testnet, Quicknode RPC) | passed, 101 checks |
 | Shared unit tests (`pnpm --filter @thunai/shared test`) | 7 passed (contact rules, same person however typed, masking) |
 | `pnpm agora:check` against the live pair | **not ready, as expected**: token and decimals handling pass; the vault is not whitelisted |
 | Landing page production build | compiled, `/` and `/traction` |
