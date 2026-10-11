@@ -1,0 +1,12 @@
+{
+  "chainId": 10143,
+  "thunaiVault": "0xF2BA20FaF5f171DcDB9E7F70a489855d170465C1",
+  "scamSignals": "0x9d2a0Fbf98E9e2F3B2EE2C1A8E9525B3001614A8",
+  "ctk": "0x7BEb5D9DB0d85cBEa543C04f0dE8c23c2176cd9D",
+  "ausd": "0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC",
+  "relayer": "0x3Ba85544C7a5C386AE7Cf753e887FB05Ac946074",
+  "agent": "0x301ea090e957c28ca536ab8679EBEF2D354Febd8",
+  "agoraPair": "0x1Aa8958Aa34cEC8096EF4381cb335effe977b0ae",
+  "agoraEnabled": false,
+  "standInTokens": false
+}
