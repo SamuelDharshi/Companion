@@ -848,3 +848,39 @@ try {
   if (TESTNET) {
     const byPath = {};
     for (const t of timings) (byPath[t.path] ??= []).push(t.latencyMs);
+    const summary = Object.fromEntries(
+      Object.entries(byPath).map(([path, values]) => {
+        const sorted = [...values].sort((x, y) => x - y);
+        return [path, { count: values.length, minMs: sorted[0], medianMs: sorted[Math.floor(sorted.length / 2)], maxMs: sorted[sorted.length - 1] }];
+      }),
+    );
+    const all = timings.map((t) => t.latencyMs).sort((x, y) => x - y);
+    const record = {
+      ranAt: new Date().toISOString(),
+      network: "Monad testnet",
+      chainId: config.chainId,
+      vault: config.thunaiVault,
+      passed: !failed,
+      confirmedTransactions: all.length,
+      overallMedianMs: all[Math.floor(all.length / 2)],
+      overallMinMs: all[0],
+      overallMaxMs: all[all.length - 1],
+      byEndpoint: summary,
+    };
+    writeFileSync(join(root, "docs", "e2e-testnet.json"), JSON.stringify(record, null, 2) + "\n");
+    ok(`timings recorded to docs/e2e-testnet.json (median ${record.overallMedianMs}ms over ${all.length} transactions)`);
+  }
+
+  console.log(
+    failed
+      ? "\n\x1b[31mEnd-to-end run FAILED\x1b[0m\n"
+      : "\n\x1b[32mEnd-to-end run passed: the whole rescue works on " + (TESTNET ? "the live Monad testnet" : "a local chain") + ".\x1b[0m\n",
+  );
+  cleanup();
+  process.exit(failed ? 1 : 0);
+} catch (error) {
+  console.error(`\n\x1b[31mEnd-to-end run errored:\x1b[0m ${error.message}`);
+  if (process.env.E2E_VERBOSE) console.error(error);
+  cleanup();
+  process.exit(1);
+}
