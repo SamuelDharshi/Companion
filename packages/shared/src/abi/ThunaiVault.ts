@@ -1698,3 +1698,293 @@ export const ThunaiVaultAbi = [
       },
       {
         "name": "nonce",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      },
+      {
+        "name": "timestamp",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      },
+      {
+        "name": "latencySeconds",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "NotesStored",
+    "inputs": [
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "role",
+        "type": "uint8",
+        "indexed": true,
+        "internalType": "uint8"
+      },
+      {
+        "name": "version",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Payout",
+    "inputs": [
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "amountIn",
+        "type": "uint128",
+        "indexed": false,
+        "internalType": "uint128"
+      },
+      {
+        "name": "amountOut",
+        "type": "uint128",
+        "indexed": false,
+        "internalType": "uint128"
+      },
+      {
+        "name": "viaAgora",
+        "type": "bool",
+        "indexed": false,
+        "internalType": "bool"
+      },
+      {
+        "name": "timestamp",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "RolesChanged",
+    "inputs": [
+      {
+        "name": "relayer",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "agent",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "SOSRaised",
+    "inputs": [
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "reasonCode",
+        "type": "uint8",
+        "indexed": false,
+        "internalType": "uint8"
+      },
+      {
+        "name": "timestamp",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Unfrozen",
+    "inputs": [
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Withdrawn",
+    "inputs": [
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "to",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint128",
+        "indexed": false,
+        "internalType": "uint128"
+      },
+      {
+        "name": "memoHash",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "BadDecimals",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "BadNonce",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "BadPasskey",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "BadReason",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "BadRole",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "BadSignature",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ChallengeUsed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EnvelopeExpired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "FamilyFrozen",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "HoldNotExpired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "HoldNotOpen",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InsufficientBalance",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "IntentExpired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NoCheckPending",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NoSuchFamily",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NoSuchHold",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotAgent",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotDue",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotFrozen",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotOwner",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotRelayer",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotesTooLarge",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "UnbackedCredit",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ZeroAmount",
+    "inputs": []
+  }
+] as const;
