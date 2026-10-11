@@ -77,7 +77,8 @@ if (env.THUNAI_START_BLOCK === 0) {
 }
 // Event counting reads logs in 100-block steps. If the main RPC refuses a range that wide, LOGS_RPC_URL points
 // it at one that does, so the rest of the relayer can keep using the faster provider.
-const logsClient = env.LOGS_RPC_URL ? createPublicClient({ transport: http(env.LOGS_RPC_URL) }) : chain.publicClient;
+const logsRpc = env.LOGS_RPC_URL ?? env.ALCHEMY_RPC_URL;
+const logsClient = logsRpc ? createPublicClient({ transport: http(logsRpc) }) : chain.publicClient;
 const tally = new TallyFollower(
   logsClient as typeof chain.publicClient,
   deployment.thunaiVault as Address,

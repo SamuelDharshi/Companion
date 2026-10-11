@@ -61,6 +61,11 @@ const schema = z.object({
    * to a tiny range (a Quicknode Discover plan allows 5 blocks); the public testnet RPC allows 100.
    */
   LOGS_RPC_URL: z.preprocess((v) => (v === "" ? undefined : v), z.string().url().optional()),
+  /**
+   * An Alchemy Monad testnet RPC (https://monad-testnet.g.alchemy.com/v2/<key>). When set, and LOGS_RPC_URL is blank, event
+   * counting reads its logs from Alchemy instead of the public testnet RPC. The key is a secret: keep it in .env only.
+   */
+  ALCHEMY_RPC_URL: z.preprocess((v) => (v === "" ? undefined : v), z.string().url().optional()),
   /** The block the vault was created in, where event counting starts. Blank starts a few hundred blocks back. */
   THUNAI_START_BLOCK: z.preprocess((v) => (v === "" ? undefined : v), z.coerce.number().default(0)),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
