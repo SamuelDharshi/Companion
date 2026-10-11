@@ -1,0 +1,19 @@
+{
+  "name": "@thunai/indexer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "codegen": "envio codegen",
+    "dev": "envio dev",
+    "start": "envio start",
+    "stop": "envio stop",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "envio": "3.14.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}

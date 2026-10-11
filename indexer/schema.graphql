@@ -1,0 +1,152 @@
+"""
+A family: one student abroad, one guardian at home.
+Derived fields are used throughout, so the app can read a whole family's history in a
+single query instead of stitching lists together on the device.
+"""
+type Family {
+  id: ID! # familyId
+  student: String!
+  guardian: String!
+  createdAt: BigInt!
+  """Spendable allowance, as last seen in a Payout or Withdrawn event."""
+  balance: BigInt!
+  """Money from home that has not been settled yet."""
+  homeBalance: BigInt!
+  weeklyAmount: BigInt!
+  perWithdrawalCap: BigInt!
+  cadence: BigInt!
+  nextRunAt: BigInt!
+  frozen: Boolean!
+  """Running totals, so a family's own screens need no aggregation."""
+  totalReceived: BigInt!
+  totalHeld: BigInt!
+  scamsStopped: Int!
+  """Which version of each person's encrypted notes is stored onchain. The ciphertext is not indexed."""
+  studentNotesVersion: Int!
+  guardianNotesVersion: Int!
+  holds: [Hold!]! @derivedFrom(field: "family")
+  payouts: [Payout!]! @derivedFrom(field: "family")
+  checks: [Check!]! @derivedFrom(field: "family")
+  withdrawals: [Withdrawal!]! @derivedFrom(field: "family")
+  sos: [Sos!]! @derivedFrom(field: "family")
+}
+
+"""An allowance arrival. `viaAgora` records honestly whether Instant Settlement ran."""
+type Payout {
+  id: ID!
+  family: Family!
+  amountIn: BigInt!
+  amountOut: BigInt!
+  viaAgora: Boolean!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  txHash: String!
+}
+
+"""
+A cooling hold: the moment the money stopped.
+`secondsToResolve` is the number the pitch rests on, so it is recorded per hold and
+aggregated into NetworkStats.
+"""
+type Hold {
+  id: ID! # holdId
+  family: Family!
+  to: String!
+  amount: BigInt!
+  """1 NEW_PAYEE, 2 OVER_CAP, 3 UNSCHEDULED, 4 NETWORK_FLAG, 5 CHECK_PENDING, 6 FROZEN"""
+  reason: Int!
+  reasonName: String!
+  """Labelled by the classifier after the fact. The hold is never caused by it."""
+  scriptId: Int
+  """OPEN, RELEASED, CANCELLED, EXPIRED"""
+  status: String!
+  memoHash: String!
+  openedAt: BigInt!
+  releaseAt: BigInt!
+  resolvedAt: BigInt
+  secondsToResolve: Int
+  """True when the guardian cancelled it: the only kind of hold that can be reported."""
+  stoppedByGuardian: Boolean!
+  txHash: String!
+}
+
+"""A payment that actually left, whether straight through or after a guardian allowed it."""
+type Withdrawal {
+  id: ID!
+  family: Family!
+  to: String!
+  amount: BigInt!
+  memoHash: String!
+  timestamp: BigInt!
+  txHash: String!
+}
+
+"""
+"Check on Arjun": a guardian answering a voice-clone call.
+`latencySeconds` is what the result screen shows as "signed 0.9s ago".
+"""
+type Check {
+  id: ID!
+  family: Family!
+  nonce: BigInt!
+  requestedAt: BigInt!
+  provedAt: BigInt
+  latencySeconds: Int
+  answered: Boolean!
+}
+
+"""A student's Silent SOS: someone was demanding money. Counted so the public number is real."""
+type Sos {
+  id: ID!
+  family: Family!
+  """0 = not said, 1 gift card, 2 Zelle, 3 wire, 4 crypto, 5 other."""
+  reasonCode: Int!
+  timestamp: BigInt!
+}
+
+"""
+A flagged payee handle, as the network knows it.
+Pseudonymous, not private: the hash must be the same for every family or no family's
+agent could match it.
+"""
+type Signal {
+  id: ID! # handleHash
+  handleHash: String!
+  reports: Int!
+  lastAt: BigInt!
+  scriptId: Int!
+  """The flagged party's responses. Due process, kept deliberately open."""
+  rebuttals: [String!]!
+  firstReportedAt: BigInt!
+}
+
+"""
+One row, id "global". Powers the public "families protected" counter.
+Every number here is something we can defend in front of a judge.
+"""
+type NetworkStats {
+  id: ID!
+  families: Int!
+  holdsOpened: Int!
+  """Holds a guardian actively cancelled."""
+  scamsStopped: Int!
+  """Holds that nobody answered and that returned the money by themselves."""
+  holdsExpired: Int!
+  """Total value of every hold a guardian stopped."""
+  dollarsProtected: BigInt!
+  """Total allowance settled across all families."""
+  dollarsDelivered: BigInt!
+  payoutsViaAgora: Int!
+  payoutsFallback: Int!
+  checksRequested: Int!
+  checksAnswered: Int!
+  reportsFiled: Int!
+  """Silent SOS presses."""
+  sosRaised: Int!
+  """Median seconds from hold opened to guardian decision. The headline traction number."""
+  medianSaveSeconds: Int!
+  fastestSaveSeconds: Int!
+  """Every resolve time, kept so the median stays correct as rows arrive."""
+  saveSeconds: [Int!]!
+  updatedAt: BigInt!
+}
