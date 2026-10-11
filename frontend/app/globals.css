@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+/*
+ * White with green. The greens come from the "Green Screen" palette
+ * (#00ff00 .. #00ff44). Neon green is unreadable as text on white (about 1.4:1), so
+ * it is used for fills and highlights, with dark text on top; green that has to be read
+ * on white is --color-brand-deep.
+ */
+@theme inline {
+  --font-sans: var(--font-body), "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), "IBM Plex Mono", monospace;
+
+  --color-brand: #00ff22;
+  --color-brand-hover: #00ff11;
+  --color-brand-soft: #dcffe2;
+  --color-brand-tint: #f2fff4;
+  --color-brand-deep: #007a1e;
+  --color-brand-ink: #04210a;
+
+  --color-ink: #0b1a0f;
+  --color-ink-muted: #4b5a4f;
+  --color-ink-faint: #7e8c82;
+  --color-line: #e3eae3;
+
+  --color-held: #ffae45;
+  --color-held-soft: #fff1de;
+  --color-held-ink: #6b3e00;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body), "Plus Jakarta Sans", system-ui, sans-serif;
+  background: #ffffff;
+  color: var(--color-ink);
+}
+
+/* Headings. The class keeps its old name so every component picks up the new face. */
+@utility font-grotesk {
+  font-family: var(--font-display), "Bricolage Grotesque", system-ui, sans-serif;
+}
+
+/* One accent word per heading, in an elegant italic serif. */
+@utility font-accent {
+  font-family: var(--font-accent), "Instrument Serif", Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+@utility font-ibm-mono {
+  font-family: var(--font-ibm-plex-mono), "IBM Plex Mono", monospace;
+}
