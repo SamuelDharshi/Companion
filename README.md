@@ -4,12 +4,14 @@
 
 *Companion* (**Thunai** in Tamil, which means "companion") is a family money agent for Indian parents with a child studying abroad.
 
-- **Every week**, it moves the allowance across borders in about a second (measured median 1.2 s on Monad testnet).
+- **Every week**, it moves the allowance across borders in about a second (measured median 1.13 s on Monad testnet).
 - **When something is wrong**, it pauses the money and pages Kavya before anything moves.
 
 Built for **Monad Metropolis** · **Track: Consumer Products & Payments** · Monad Testnet (10143)
 
-**Bounties:** Agora Cross-Border Payments · Mera "Best Mera-Powered UX" · Mera "One Passkey, Many Keys" · Best Community Team. See [`docs/SUBMISSION.md`](docs/SUBMISSION.md).
+**Bounties:** Agora Cross-Border Payments · Mera "Best Mera-Powered UX" · Mera "One Passkey, Many Keys" · Best Community Team. Envio, Chainlink CRE and Alchemy are in progress and described with their exact status in [`docs/SUBMISSION.md`](docs/SUBMISSION.md).
+
+**Live:** https://companion-monad.vercel.app (the app is at `/app`). Testnet only.
 
 **Contents**
 
@@ -131,7 +133,7 @@ inside the time the scammer is still on the line.**
 ```
  Arjun's phone        Relayer          ThunaiVault        Agent / Pager       Kavya's phone
       │                  │            (Monad testnet)           │                  │
-      │  1. "Send $2,000 to a new address"                       │                  │
+      │  1. "Send $2,000 to a new person"                       │                  │
       │  sign intent     │                  │                    │                  │
       │  (Face ID once)  │                  │                    │                  │
       │─────────────────>│                  │                    │                  │
@@ -459,7 +461,7 @@ If the model is down, wrong or manipulated, the hold is already open and Kavya s
 | **Sign-in** | "Companion" with a small "Thunai", a name field, a Face ID button | Create the account with one passkey |
 | **Invite** | **Share on WhatsApp**, **Copy invite link**, a "Waiting" pill | Bring Kavya in |
 | **Home** | Balance, "Next from Kavya: Sunday $150", **Scheduled**, **Activity**, **Send**, **Our network**, **Someone is asking me for money** | The everyday screen |
-| **Send** | **To whom**, **Amount**, **What's this for**, **Are you on a call right now?** (optional, in minutes), **Send** | Pay a person. Before he sends, a card says either "This one pays straight through" or "This is someone new, so we will hold it and ask Kavya first." The call length helps Kavya understand what is happening |
+| **Send** | **Someone else: their name**, **Their phone number or email** (no address, ever), **Amount**, **What's this for**, **Are you on a call right now?** (optional, in minutes), **Send** | Pay a person. Before he sends, a card says either "This one pays straight through" or "This is someone new, so we will hold it and ask Kavya first." The call length helps Kavya understand what is happening |
 | **Hold** | "Held for safety. We've asked Kavya." and a live countdown | Watching Kavya decide. Money has not left |
 | **Check** | **Face ID** ("Shows it's really you, right now") and **I can't talk freely** | Answering Kavya's check |
 | **Silent SOS** | "Your family has been told." **Video call Kavya**, and what the caller wants | The one-tap emergency screen |
@@ -527,7 +529,7 @@ Open on two devices (or two browsers).
 
 1. **Device 1.** Create as the student. Copy the invite link.
 2. **Device 2.** Open the link. Accept as the guardian. Sign the envelope with one Face ID.
-3. **Device 1.** Send a small amount to a brand-new address. Watch it say "Held for safety."
+3. **Device 1.** Send a small amount to a brand-new person: a name and a phone number such as "+91 98765 43210". Watch it say "Held for safety."
 4. **Device 2.** Open the hold. Tap **Stop it**. Device 1 shows the money back in about a second.
 5. **Device 1.** Tap **Someone is asking me for money**. Device 2 shows the pause and a video call.
 6. **Device 2.** Tap **Check on Arjun**. Device 1 answers with one Face ID.
@@ -614,13 +616,13 @@ The rescue has to finish **while the scammer is still on the line.**
 ```
    Time from "tap" to "confirmed" on Monad testnet (measured, pnpm e2e:testnet)
 
-   fastest   0.65 s  ████████████
-   median    1.23 s  ███████████████████████
-   slowest   1.53 s  █████████████████████████████
+   fastest   0.56 s  ██████████
+   median    1.13 s  ████████████████████
+   slowest   1.41 s  █████████████████████████
                      0       0.5      1.0      1.5 s
 ```
 
-**Measured on live Monad testnet** (`pnpm e2e:testnet`, 19 confirmed transactions): median **1.23 s**, fastest 0.65 s, slowest 1.53 s. Raw numbers are in [`docs/e2e-testnet.json`](docs/e2e-testnet.json), and the landing page lists every transaction of a recorded run with a link. No other latency figure is quoted anywhere.
+**Measured on live Monad testnet** (`pnpm e2e:testnet`, 23 confirmed transactions): median **1.13 s**, fastest 0.56 s, slowest 1.41 s. Raw numbers are in [`docs/e2e-testnet.json`](docs/e2e-testnet.json), and the landing page lists every transaction of a recorded run with a link. No other latency figure is quoted anywhere.
 
 ---
 
@@ -664,6 +666,7 @@ The app reads the contract and the relayer directly. There is no indexer in the 
 | [`contracts/`](contracts) | `ThunaiVault.sol`, `ScamSignals.sol`, 95 Foundry tests (including a fork test against the real Agora pair), deploy script |
 | [`relayer/`](relayer) | Gas sponsorship, `eth_sendRawTransactionSync`, intent API |
 | [`agent/`](agent) | Allowance runner, keeper, classifier, pager |
+| [`cre/`](cre) | A Chainlink CRE workflow that reads the vault on Monad testnet and drives the allowance and the unanswered holds through the agent. Typechecked; simulation pending. |
 | [`indexer/`](indexer) | An Envio indexer (config, schema, handlers). **Included but not deployed.** |
 | [`app/`](app) | Expo app — both roles, every screen |
 | [`frontend/`](frontend) | The landing page (Next.js). Its numbers come from a recorded run on testnet. |
@@ -711,9 +714,9 @@ accept as the guardian.
 ### One permanent HTTPS domain (read this before creating any account)
 
 A passkey is created for **one host** and works only there. If you open the app from a different host,
-every account made on the old one is unreachable. So pick the host once and keep it: a **reserved ngrok
-domain** or a **Vercel URL**, never a random one that changes. Passkeys need HTTPS (or `localhost`), and the
-relayer and agent must be HTTPS too when the app is, or the browser blocks the calls.
+every account made on the old one is unreachable. The permanent host is **https://companion-monad.vercel.app**; for local
+development use `localhost`, and for a phone test a reserved tunnel domain, never a random one that changes. Passkeys need
+HTTPS (or `localhost`), and the relayer and agent must be HTTPS too when the app is, or the browser blocks the calls.
 
 The landing page and the app are **one site** (`/` and `/app`), and the site proxies the relayer and agent at
 `/relayer` and `/agent`, so there is one host to keep:
@@ -727,8 +730,11 @@ APP_URL=https://your-permanent-host/app
 ```
 
 `pnpm dev` checks the URLs on startup and warns if the app origin is not HTTPS or localhost, or if the host is not local (a
-reminder that it must never change). The app also says so on its first screen. [`docs/DEPLOY.md`](docs/DEPLOY.md) covers
-tunnelling it for a phone test and deploying the same site on Render (`render.yaml`, not yet run on Render).
+reminder that it must never change). The app also says so on its first screen.
+
+**Where it runs.** The site (landing page and `/app`) is on Vercel. The relayer and agent run as one always-on service on Render
+(`render.yaml`, `scripts/serve.mjs`), and the site proxies `/relayer` and `/agent` to it. [`docs/DEPLOY.md`](docs/DEPLOY.md) has the
+steps, including tunnelling for a phone test.
 
 ```
    https://<site>/            the landing page
@@ -782,7 +788,7 @@ payee receives nothing at any point. `pnpm e2e:testnet` adds ERC-8004 reputation
 
 Open on two devices. **Device 1:** create as the student → copy the invite link.
 **Device 2:** open the link → accept as the guardian with one Face ID → sign the envelope.
-Then send a small amount to a new address from Device 1 and watch Device 2.
+Then send a small amount to a new person (a name and a phone number) from Device 1 and watch Device 2.
 
 Passkeys need a secure context, so use `https://` or `localhost`. See [`docs/DEMO.md`](docs/DEMO.md) for the tunnel and the second-device setup.
 
@@ -815,9 +821,12 @@ word on their screens.
 - [**Mera** — one passkey, many keys](docs/SUBMISSION.md#mera-many-keys)
 - Best Community Team (selected on our hackathon profile)
 
-Not entered: Envio (an indexer is included in `/indexer` but is not deployed; see
-[`docs/ENVIO_DEPLOY.md`](docs/ENVIO_DEPLOY.md)), Cleanverse and Aurora. [`docs/STATUS.md`](docs/STATUS.md) lists exactly what
-is verified, unverified and not done.
+In progress, and only claimed once working: [Envio](docs/SUBMISSION.md#envio) (the indexer is included in `/indexer` but is not
+deployed; see [`docs/ENVIO_DEPLOY.md`](docs/ENVIO_DEPLOY.md)), [Chainlink CRE](docs/SUBMISSION.md#chainlink-cre) (built, simulation
+not yet run) and [Alchemy](docs/SUBMISSION.md#alchemy) (not integrated yet).
+
+Not entered: Dynamic and Privy (they would replace Mera as the account layer), Cleanverse, Nansen, Aurora, Kuru, Perpl, Agora
+Trading, MetaMask and Hunyuan. [`docs/STATUS.md`](docs/STATUS.md) lists exactly what is verified, unverified and not done.
 
 One finding worth reading in [`docs/SUBMISSION.md`](docs/SUBMISSION.md): how one Face ID is made to
 serve both Mera's PRF and the contract's WebAuthn verification.
