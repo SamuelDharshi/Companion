@@ -16,6 +16,7 @@
     "typescript": "^5.9.2"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test test/payee.test.ts"
   }
 }

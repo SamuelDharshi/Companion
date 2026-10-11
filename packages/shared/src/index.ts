@@ -8,3 +8,4 @@ export * from "./subscribe";
 export * from "./money";
 export * from "./queries";
 export * from "./abi/index";
+export * from "./payee";
