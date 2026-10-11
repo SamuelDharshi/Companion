@@ -848,3 +848,853 @@ export const ThunaiVaultAbi = [
     "stateMutability": "view"
   },
   {
+    "type": "function",
+    "name": "requestCheck",
+    "inputs": [
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "nonce",
+        "type": "uint64",
+        "internalType": "uint64"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "resolveChallenge",
+    "inputs": [
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "holdId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "release",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "resolveHold",
+    "inputs": [
+      {
+        "name": "holdId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "release",
+        "type": "bool",
+        "internalType": "bool"
+      },
+      {
+        "name": "auth",
+        "type": "tuple",
+        "internalType": "struct WebAuthn.WebAuthnAuth",
+        "components": [
+          {
+            "name": "authenticatorData",
+            "type": "bytes",
+            "internalType": "bytes"
+          },
+          {
+            "name": "clientDataJSON",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "challengeIndex",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "typeIndex",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "r",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "s",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "runAllowance",
+    "inputs": [
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "scamSignals",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IScamSignals"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "setAgora",
+    "inputs": [
+      {
+        "name": "pair",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "enabled",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setEnvelope",
+    "inputs": [
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "e",
+        "type": "tuple",
+        "internalType": "struct ThunaiVault.Envelope",
+        "components": [
+          {
+            "name": "weeklyAmount",
+            "type": "uint128",
+            "internalType": "uint128"
+          },
+          {
+            "name": "perWithdrawalCap",
+            "type": "uint128",
+            "internalType": "uint128"
+          },
+          {
+            "name": "payeesRoot",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "cadence",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "holdTimeout",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "expiry",
+            "type": "uint64",
+            "internalType": "uint64"
+          },
+          {
+            "name": "nextRunAt",
+            "type": "uint64",
+            "internalType": "uint64"
+          }
+        ]
+      },
+      {
+        "name": "auth",
+        "type": "tuple",
+        "internalType": "struct WebAuthn.WebAuthnAuth",
+        "components": [
+          {
+            "name": "authenticatorData",
+            "type": "bytes",
+            "internalType": "bytes"
+          },
+          {
+            "name": "clientDataJSON",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "challengeIndex",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "typeIndex",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "r",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "s",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setNotes",
+    "inputs": [
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "role",
+        "type": "uint8",
+        "internalType": "uint8"
+      },
+      {
+        "name": "ciphertext",
+        "type": "bytes",
+        "internalType": "bytes"
+      },
+      {
+        "name": "auth",
+        "type": "tuple",
+        "internalType": "struct WebAuthn.WebAuthnAuth",
+        "components": [
+          {
+            "name": "authenticatorData",
+            "type": "bytes",
+            "internalType": "bytes"
+          },
+          {
+            "name": "clientDataJSON",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "challengeIndex",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "typeIndex",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "r",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "s",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setRoles",
+    "inputs": [
+      {
+        "name": "_relayer",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "_agent",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setScamSignals",
+    "inputs": [
+      {
+        "name": "signals",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "sos",
+    "inputs": [
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "nonce",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "duressSig",
+        "type": "bytes",
+        "internalType": "bytes"
+      },
+      {
+        "name": "reasonCode",
+        "type": "uint8",
+        "internalType": "uint8"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "sosCount",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "unfreeze",
+    "inputs": [
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "auth",
+        "type": "tuple",
+        "internalType": "struct WebAuthn.WebAuthnAuth",
+        "components": [
+          {
+            "name": "authenticatorData",
+            "type": "bytes",
+            "internalType": "bytes"
+          },
+          {
+            "name": "clientDataJSON",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "challengeIndex",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "typeIndex",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "r",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "s",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "unfreezeChallenge",
+    "inputs": [
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "usedChallenge",
+    "inputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "withdraw",
+    "inputs": [
+      {
+        "name": "i",
+        "type": "tuple",
+        "internalType": "struct ThunaiVault.WithdrawIntent",
+        "components": [
+          {
+            "name": "familyId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "to",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint128",
+            "internalType": "uint128"
+          },
+          {
+            "name": "memoHash",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "nonce",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "deadline",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      },
+      {
+        "name": "merkleProof",
+        "type": "bytes32[]",
+        "internalType": "bytes32[]"
+      },
+      {
+        "name": "studentSig",
+        "type": "bytes",
+        "internalType": "bytes"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "holdId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "withdrawDigest",
+    "inputs": [
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "to",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint128",
+        "internalType": "uint128"
+      },
+      {
+        "name": "memoHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "deadline",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "withdrawNonce",
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "event",
+    "name": "AgoraConfigured",
+    "inputs": [
+      {
+        "name": "pair",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "enabled",
+        "type": "bool",
+        "indexed": false,
+        "internalType": "bool"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "CheckRequested",
+    "inputs": [
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "nonce",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      },
+      {
+        "name": "requestedAt",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "EnvelopeSet",
+    "inputs": [
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "weeklyAmount",
+        "type": "uint128",
+        "indexed": false,
+        "internalType": "uint128"
+      },
+      {
+        "name": "perWithdrawalCap",
+        "type": "uint128",
+        "indexed": false,
+        "internalType": "uint128"
+      },
+      {
+        "name": "cadence",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      },
+      {
+        "name": "nextRunAt",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "FamilyRegistered",
+    "inputs": [
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "studentAcct",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "guardianAcct",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Frozen",
+    "inputs": [
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "by",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Funded",
+    "inputs": [
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "from",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint128",
+        "indexed": false,
+        "internalType": "uint128"
+      },
+      {
+        "name": "homeBalance",
+        "type": "uint128",
+        "indexed": false,
+        "internalType": "uint128"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "HoldExpired",
+    "inputs": [
+      {
+        "name": "holdId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "amount",
+        "type": "uint128",
+        "indexed": false,
+        "internalType": "uint128"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "HoldOpened",
+    "inputs": [
+      {
+        "name": "holdId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "to",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint128",
+        "indexed": false,
+        "internalType": "uint128"
+      },
+      {
+        "name": "reason",
+        "type": "uint8",
+        "indexed": false,
+        "internalType": "uint8"
+      },
+      {
+        "name": "releaseAt",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      },
+      {
+        "name": "memoHash",
+        "type": "bytes32",
+        "indexed": false,
+        "internalType": "bytes32"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "HoldResolved",
+    "inputs": [
+      {
+        "name": "holdId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "released",
+        "type": "bool",
+        "indexed": false,
+        "internalType": "bool"
+      },
+      {
+        "name": "secondsToResolve",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "LivenessProved",
+    "inputs": [
+      {
+        "name": "familyId",
+        "type": "uint256",
+        "indexed": true,
+        "internalType": "uint256"
+      },
+      {
+        "name": "nonce",
