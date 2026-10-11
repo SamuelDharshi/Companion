@@ -55,3 +55,8 @@ Thumbs.db
 docs/vendor/
 # the template's npm lockfile duplicates frontend/pnpm-lock.yaml
 frontend/package-lock.json
+
+# Vercel link and local deploy artefacts
+.vercel/
+**/.vercel/
+.render.env

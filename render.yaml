@@ -1,45 +1,30 @@
-# Render blueprint: one website (landing page + the app at /app) and the two servers behind it.
+# Render blueprint: the relayer and the agent as ONE always-on service.
 #
-#   https://<your-site>/          the landing page
-#   https://<your-site>/app       the Companion app
-#   https://<your-site>/relayer/* proxied to the relayer service
-#   https://<your-site>/agent/*   proxied to the agent service
+# The website (landing page and the app at /app) is hosted on Vercel. It proxies two prefixes to this service:
 #
-# NOT YET DEPLOYED. This was written from Render's blueprint format and checked against our own build
-# scripts locally, but nobody has run it on Render. Read docs/DEPLOY.md before using it.
+#   https://<site>/relayer/*  ->  https://<this service>/*
+#   https://<site>/agent/*    ->  https://<this service>/agent/*
 #
-# Every value marked `sync: false` is a secret or an address you enter in the Render dashboard. None of them are
-# in the repository.
+# scripts/serve.mjs starts both servers and routes by path behind the single port Render gives a service.
+#
+# Use a paid plan. A free service goes to sleep after a quiet spell, and a sleeping service has no keeper, so
+# an unanswered hold would not expire and the weekly allowance would not run.
+#
+# Every value marked `sync: false` is entered in the Render dashboard (or pasted from `.render.env`, which
+# `node scripts/render-env.mjs` writes locally and git ignores). None of them are in the repository.
+# Do NOT enter DEPLOYER_PRIVATE_KEY here: the service never needs it.
 services:
   - type: web
-    name: companion-site
+    name: companion-api
     runtime: node
-    plan: free
-    buildCommand: corepack enable && pnpm install --frozen-lockfile=false && node scripts/build-web.mjs --next
-    startCommand: cd frontend && pnpm exec next start -p $PORT
-    envVars:
-      - key: NODE_VERSION
-        value: 22
-      # Where the site proxies /relayer and /agent to. These stay on the server.
-      - key: RELAYER_URL
-        sync: false
-      - key: AGENT_URL
-        sync: false
-      # The landing page reads live counts for /traction from the relayer.
-      - key: NEXT_PUBLIC_APP_URL
-        value: /app
-
-  - type: web
-    name: companion-relayer
-    runtime: node
-    plan: starter # a free service sleeps, which would make the first action of a demo slow
-    buildCommand: corepack enable && pnpm install --frozen-lockfile=false
-    startCommand: cd relayer && pnpm exec tsx src/index.ts
+    plan: starter
+    buildCommand: corepack enable && pnpm install --frozen-lockfile --filter @thunai/relayer... --filter @thunai/agent...
+    startCommand: node scripts/serve.mjs
     healthCheckPath: /health
-    # The relayer keeps family display names and push subscriptions in DATA_DIR. Without a disk they are lost on
-    # every deploy, so a family would have to be recreated. Attach a disk on a paid plan.
+    # Family display names, push subscriptions and the traction cache live in DATA_DIR. The chain is the record of
+    # money and identity, so losing the disk would not lose funds, but a family would have to be recreated.
     disk:
-      name: relayer-data
+      name: companion-data
       mountPath: /var/data
       sizeGB: 1
     envVars:
@@ -47,8 +32,16 @@ services:
         value: 22
       - key: DATA_DIR
         value: /var/data
-      - key: HOST
-        value: 0.0.0.0
+      - key: LOG_LEVEL
+        value: info
+      - key: TESTNET_PARTNER_STANDIN
+        value: "true"
+      - key: KEEPER_ENABLED
+        value: "true"
+      - key: CORS_ORIGIN
+        sync: false # the site's origin, for example https://companion-family.vercel.app
+      - key: APP_URL
+        sync: false # https://<the site>/app , used in alert and invite links
       - key: MONAD_RPC_URL
         sync: false
       - key: LOGS_RPC_URL
@@ -57,46 +50,19 @@ services:
         value: 70125515
       - key: RELAYER_PRIVATE_KEY
         sync: false
-      - key: AGENT_URL
-        sync: false
-      - key: DEV_ADMIN_TOKEN
-        sync: false
-      - key: INTERNAL_TOKEN
-        sync: false
-      - key: TESTNET_PARTNER_STANDIN
-        value: "true"
-      - key: VAPID_PUBLIC_KEY
-        sync: false
-      - key: APP_URL
-        sync: false
-
-  - type: web
-    name: companion-agent
-    runtime: node
-    plan: starter
-    buildCommand: corepack enable && pnpm install --frozen-lockfile=false
-    startCommand: cd agent && pnpm exec tsx src/index.ts
-    healthCheckPath: /health
-    envVars:
-      - key: NODE_VERSION
-        value: 22
-      - key: HOST
-        value: 0.0.0.0
-      - key: MONAD_RPC_URL
-        sync: false
       - key: AGENT_PRIVATE_KEY
         sync: false
-      - key: RELAYER_URL
-        sync: false
       - key: DEV_ADMIN_TOKEN
         sync: false
       - key: INTERNAL_TOKEN
-        sync: false
-      - key: APP_URL
-        sync: false
-      - key: ANTHROPIC_API_KEY
         sync: false
       - key: VAPID_PUBLIC_KEY
         sync: false
       - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_SUBJECT
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: CLASSIFIER_MODEL
         sync: false
