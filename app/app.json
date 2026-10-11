@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "Companion",
+    "slug": "thunai",
+    "scheme": "thunai",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "plugins": ["expo-router"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "app.thunai",
+      "associatedDomains": ["webcredentials:thunai.app"]
+    },
+    "android": {
+      "package": "app.thunai",
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "name": "Companion",
+      "shortName": "Companion",
+      "themeColor": "#00FF22",
+      "backgroundColor": "#FFFFFF",
+      "display": "standalone",
+      "lang": "en"
+    },
+    "extra": {
+      "relayerUrl": "http://localhost:8787",
+      "agentUrl": "http://localhost:8788",
+      "indexerUrl": "http://localhost:8080/v1/graphql"
+    }
+  }
+}
