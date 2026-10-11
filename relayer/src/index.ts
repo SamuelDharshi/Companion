@@ -848,3 +848,142 @@ app.post("/partner/deposit", async (request, reply) => {
 
 // ------------------------------------------------------------ encrypted notes
 
+/**
+ * A person's encrypted notes. The relayer never sees a key or a plaintext: the key is derived
+ * on the person's own devices from their passkey, and the vault stores only ciphertext. Any
+ * of their devices can read it back after one Face ID.
+ */
+app.get<{ Params: { id: string; role: string } }>("/notes/:id/:role", async (request, reply) => {
+  const role = Number(request.params.role);
+  if (role !== 0 && role !== 1) return reply.code(400).send({ error: "Role must be 0 or 1." });
+  const stored = await vault.readNotes(BigInt(request.params.id), role).catch(() => null);
+  if (!stored) return reply.code(404).send({ error: "No such family." });
+  return json({ ciphertext: stored.ciphertext, version: stored.version });
+});
+
+app.get<{ Querystring: { familyId: string; role: string; ciphertext: string } }>(
+  "/notes/challenge",
+  async (request) => {
+    const { familyId, role, ciphertext } = request.query;
+    const challenge = await vault.notesChallenge(BigInt(familyId), Number(role), ciphertext as Hex);
+    return json({ challenge });
+  },
+);
+
+app.post("/notes", async (request) => {
+  const body = parse(S.notesBody, request.body);
+  const tx = await vault.setNotes(body.familyId, body.role, body.ciphertext as Hex, body.auth as never);
+  return json({ txHash: tx.hash, latencyMs: Math.round(tx.latencyMs), sync: tx.sync });
+});
+
+app.get<{ Querystring: { familyId: string } }>("/freeze/digest", async (request) => {
+  const familyId = BigInt(request.query.familyId);
+  const [digest, nonce] = await Promise.all([vault.freezeDigest(familyId), vault.freezeNonce(familyId)]);
+  return json({ digest, nonce });
+});
+
+app.get<{ Querystring: { familyId: string } }>("/unfreeze/challenge", async (request) => {
+  const challenge = await vault.unfreezeChallenge(BigInt(request.query.familyId));
+  return json({ challenge });
+});
+
+app.post("/unfreeze", async (request) => {
+  const body = parse(S.unfreezeBody, request.body);
+  const tx = await vault.unfreeze(body.familyId, body.auth as never);
+  return json({ txHash: tx.hash, latencyMs: Math.round(tx.latencyMs), sync: tx.sync });
+});
+
+// ------------------------------------------------------------- the network
+
+app.get<{ Querystring: { familyId: string; handleHash: string; scriptId: string; holdId: string } }>(
+  "/report/challenge",
+  async (request) => {
+    const { familyId, handleHash, scriptId, holdId } = request.query;
+    const challenge = await vault.reportChallenge(
+      BigInt(familyId),
+      handleHash as Hex,
+      Number(scriptId),
+      BigInt(holdId),
+    );
+    return json({ challenge });
+  },
+);
+
+/**
+ * A family confirms a scam. Accepted only when that family's guardian cancelled the hold,
+ * and only with her passkey, so one report costs one real family's Face ID.
+ */
+app.post("/report", async (request) => {
+  const body = parse(S.reportBody, request.body);
+  const tx = await vault.report({
+    handleHash: body.handleHash as Hex,
+    scriptId: body.scriptId,
+    holdId: body.holdId,
+    auth: body.auth as never,
+  });
+  return json({ txHash: tx.hash, latencyMs: Math.round(tx.latencyMs), sync: tx.sync });
+});
+
+/** What the hold card shows as evidence: how many families, and how recently. */
+app.get<{ Params: { payee: string } }>("/signals/:payee", async (request) => {
+  const hash = toHandleHash(request.params.payee as Address);
+  const flag = await vault.flagged(hash);
+  return json({ handleHash: hash, ...flag });
+});
+
+// -------------------------------------------------------------------- push
+
+app.post("/subscribe", async (request, reply) => {
+  const body = parse(S.subscribeBody, request.body);
+  // Only the student's or the guardian's own account key may subscribe a device for that role.
+  // Otherwise anyone who knew a family id could read that family's alerts.
+  const onchain = await vault.readFamily(body.familyId).catch(() => null);
+  if (!onchain) return reply.code(404).send({ error: "No such family." });
+  const expected = body.role === "guardian" ? onchain.guardianAcct : onchain.studentAcct;
+  const signer = await recoverAddress({
+    hash: subscribeDigest(body.familyId, body.role, body.endpoint),
+    signature: body.signature as Hex,
+  }).catch(() => null);
+  if (!signer || signer.toLowerCase() !== expected.toLowerCase()) {
+    return reply.code(401).send({ error: "That device is not signed by this family member." });
+  }
+  store.subscribe({
+    familyId: String(body.familyId),
+    role: body.role,
+    endpoint: body.endpoint,
+    keys: body.keys,
+    expoPushToken: body.expoPushToken,
+  });
+  return { ok: true };
+});
+
+/** The agent reads this to know where to page a family. */
+app.get<{ Params: { id: string } }>("/subscriptions/:id", async (request, reply) => {
+  // Push endpoints are private to the family. Only the agent, which pages them, may list them.
+  if (!requireInternal(request, reply)) return;
+  return json({ subscriptions: store.subscriptionsFor(request.params.id) });
+});
+
+// --------------------------------------------------------------- lifecycle
+
+app.setErrorHandler((error: Error, _request, reply) => {
+  const status = (error as { statusCode?: number }).statusCode ?? 500;
+  if (status >= 500) app.log.error({ err: error }, "request failed");
+  // Revert reasons are the most useful thing a developer can see here, and they carry
+  // no secrets: every rule they describe is public in the contract.
+  reply.code(status).send({
+    error: error.message,
+    details: (error as { shortMessage?: string }).shortMessage,
+  });
+});
+
+const address = await app.listen({ port: env.PORT, host: env.HOST });
+app.log.info(
+  {
+    vault: deployment.thunaiVault,
+    scamSignals: deployment.scamSignals,
+    relayer: chain.account.address,
+    agoraEnabled: deployment.agoraEnabled,
+  },
+  `Companion relayer on ${address} — pays gas, holds no spending power`,
+);
