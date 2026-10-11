@@ -66,7 +66,11 @@ export default function HoldScreen() {
   const lang = device.lang;
   const isGuardian = device.role === "guardian";
   const studentName = family?.studentName ?? "your child";
-  const payee = hold?.payeeName ?? "someone new";
+  const payee = hold?.payeeName
+    ? hold.payeeContact
+      ? `${hold.payeeName} (${hold.payeeContact})`
+      : hold.payeeName
+    : "someone new";
   const settled = hold ? hold.status !== HOLD_STATUS.OPEN : false;
 
   async function decide(release: boolean) {

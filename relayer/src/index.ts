@@ -9,6 +9,7 @@ import {
   parseTransaction,
   recoverAddress,
   recoverTransactionAddress,
+  stringToBytes,
   type Address,
   type Hex,
   type TransactionSerializable,
@@ -19,6 +20,9 @@ import {
   buildPayeeTree,
   formatUsd,
   handleHash as toHandleHash,
+  maskContact,
+  normalizeContact,
+  payeeAddress,
 } from "@thunai/shared";
 import { subscribeDigest } from "@thunai/shared";
 import {
@@ -59,6 +63,8 @@ const deployment = loadDeployment(
   chain.chainId,
 );
 const store = new Store(env.DATA_DIR);
+// Turns a phone number or email into a payee address. Secret, so an address reveals nothing about the person.
+const payeeSalt = (env.PAYEE_SALT ?? keccak256(stringToBytes(`${env.RELAYER_PRIVATE_KEY}companion/payee-salt`))) as Hex;
 const vault = new VaultService(chain, deployment, (familyId) =>
   store.scheduledPayees(String(familyId)),
 );
@@ -423,6 +429,13 @@ app.post("/fund", async (request, reply) => {
 app.post("/payees", async (request) => {
   const body = parse(S.addPayeeBody, request.body);
   const familyId = String(body.familyId);
+  let payeeAddr = body.address as Address | undefined;
+  let masked: string | undefined;
+  if (body.contact) {
+    const contact = contactOr400(body.contact);
+    payeeAddr = payeeAddress(payeeSalt, contact);
+    masked = maskContact(contact);
+  }
   if (!store.getFamily(familyId)) {
     store.upsertFamily({
       familyId,
@@ -433,9 +446,10 @@ app.post("/payees", async (request) => {
     });
   }
   store.addPayee(familyId, {
-    address: body.address as Address,
+    address: payeeAddr as Address,
     name: body.name,
     scheduled: body.scheduled,
+    ...(masked ? { contact: masked } : {}),
   });
 
   const tree = buildPayeeTree(store.scheduledPayees(familyId));
@@ -443,6 +457,53 @@ app.post("/payees", async (request) => {
     payees: store.getFamily(familyId)?.payees ?? [],
     payeesRoot: tree.root,
     note: "The guardian must sign a new envelope for this root to take effect.",
+  });
+});
+
+/** Reads a contact the way a family typed it, turning a bad one into a plain 400. */
+function contactOr400(raw: string) {
+  try {
+    return normalizeContact(raw);
+  } catch (cause) {
+    const err = new Error((cause as Error).message);
+    (err as any).statusCode = 400;
+    throw err;
+  }
+}
+
+/**
+ * "Someone new" without an address. The student types a name and a phone number or email; this returns the address
+ * to pay and remembers the name and a masked contact for this family, so the parent's screen says "Ravi, +91 •••••
+ * 3210" and never a string of hex. A payee the parent already approved comes back marked `scheduled`, which is what
+ * lets the app say "this pays straight through" before anything is sent.
+ */
+app.post("/payee/resolve", async (request, reply) => {
+  const body = parse(S.resolvePayeeBody, request.body);
+  const familyId = String(body.familyId);
+  const family = store.getFamily(familyId);
+  if (!family) return reply.code(404).send({ error: "No such family." });
+
+  const contact = contactOr400(body.contact);
+  const address = payeeAddress(payeeSalt, contact);
+  const masked = maskContact(contact);
+  const existing = family.payees.find((p) => p.address.toLowerCase() === address.toLowerCase());
+
+  if (!existing) {
+    if (family.payees.length >= 50) return reply.code(400).send({ error: "Too many people saved for this family." });
+    store.addPayee(familyId, { address, name: body.name, scheduled: false, contact: masked });
+  } else if (!existing.scheduled) {
+    store.addPayee(familyId, { ...existing, name: body.name, contact: masked });
+  } else if (!existing.contact) {
+    store.addPayee(familyId, { ...existing, contact: masked });
+  }
+
+  const record = store.getFamily(familyId)?.payees.find((p) => p.address.toLowerCase() === address.toLowerCase());
+  return json({
+    address,
+    name: record?.name ?? body.name,
+    contact: masked,
+    kind: contact.kind,
+    scheduled: record?.scheduled ?? false,
   });
 });
 
@@ -483,7 +544,7 @@ app.post("/withdraw", async (request) => {
       familyId: body.familyId,
       holdId,
       to: body.to,
-      payeeName: store.payeeName(String(body.familyId), body.to as Address),
+      payeeName: store.payeeLabel(String(body.familyId), body.to as Address),
       amount: body.amount,
       memo: body.memo,
       reason,
@@ -534,6 +595,7 @@ app.get<{ Params: { id: string } }>("/hold/:id", async (request, reply) => {
     reasonName: HOLD_REASON_NAME[hold.reason],
     statusName: HOLD_STATUS_NAME[hold.status],
     payeeName: store.payeeName(String(hold.familyId), hold.to),
+    payeeContact: store.payeeContact(String(hold.familyId), hold.to),
     networkFlagCount: flag.count,
     networkLastAt: flag.lastAt,
   });

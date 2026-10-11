@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -19,6 +19,8 @@ import { colors, space } from "@/theme";
 import { t } from "@/i18n/strings";
 import { useFamily } from "@/hooks/useThunai";
 import { SessionExpiredError, sendMoney } from "@/actions/money";
+import { api } from "@/api/client";
+import { normalizeContact } from "@thunai/shared";
 import SessionPrompt from "@/ui/SessionPrompt";
 import { useDeviceState } from "@/state/store";
 import type { Address } from "viem";
@@ -31,15 +33,20 @@ import type { Address } from "viem";
  * type "immigration bond for ICE officer" occasionally hears what they are saying.
  *
  * The payee can be chosen from the family's schedule, which pays straight through, or
- * entered fresh, which will open a hold. Both paths are shown plainly so there is no
- * surprise about which one is about to happen.
+ * entered fresh by NAME and PHONE or EMAIL, which will open a hold. Nobody types or sees a
+ * blockchain address: the server turns the contact into the person to pay. Both paths are shown
+ * plainly so there is no surprise about which one is about to happen.
  */
 export default function Send() {
   const router = useRouter();
   const device = useDeviceState();
   const { data: family } = useFamily(device.familyId);
 
-  const [to, setTo] = useState("");
+  const [name, setName] = useState("");
+  const [contact, setContact] = useState("");
+  // The person to pay, once a name and contact have been looked up (or a saved person was tapped).
+  const [payee, setPayee] = useState<{ address: Address; label: string; scheduled: boolean } | undefined>();
+  const [contactError, setContactError] = useState<string | undefined>();
   const [amount, setAmount] = useState("");
   const [memo, setMemo] = useState("");
   const [minutes, setMinutes] = useState("");
@@ -48,13 +55,40 @@ export default function Send() {
   const [error, setError] = useState<string | undefined>();
 
   const lang = device.lang;
-  const scheduled = family?.payees.filter((payee) => payee.scheduled) ?? [];
-  const willPayThrough = scheduled.some((payee) => payee.address.toLowerCase() === to.toLowerCase());
+  const scheduled = family?.payees.filter((saved) => saved.scheduled) ?? [];
+  const willPayThrough = payee?.scheduled ?? false;
+
+  // Look the person up shortly after they stop typing, so the card below can say "pays straight through" or
+  // "we will hold it" before anything is sent. A picked saved person skips this.
+  useEffect(() => {
+    if (!device.familyId || !name.trim() || !contact.trim()) {
+      setContactError(undefined);
+      return;
+    }
+    try {
+      normalizeContact(contact);
+    } catch (cause) {
+      setPayee(undefined);
+      setContactError((cause as Error).message);
+      return;
+    }
+    setContactError(undefined);
+    const familyId = device.familyId;
+    const timer = setTimeout(() => {
+      api
+        .resolvePayee({ familyId, name: name.trim(), contact })
+        .then((found) =>
+          setPayee({ address: found.address, label: `${found.name} (${found.contact})`, scheduled: found.scheduled }),
+        )
+        .catch((cause) => setContactError((cause as Error).message));
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [device.familyId, name, contact]);
 
   async function send() {
     if (!device.familyId) return;
-    if (!to.trim()) {
-      setError("Who is this going to?");
+    if (!payee) {
+      setError(contactError ?? "Who is this going to? Add their name and phone number or email.");
       return;
     }
     const amountUsd = Number(amount);
@@ -72,7 +106,7 @@ export default function Send() {
     try {
       const result = await sendMoney({
         familyId: device.familyId,
-        to: to.trim() as Address,
+        to: payee.address,
         amountUsd,
         memo: memo.trim(),
         callDurationMinutes: minutes ? Number(minutes) : undefined,
@@ -99,30 +133,59 @@ export default function Send() {
       {expired ? <SessionPrompt onRenewed={() => setExpired(false)} /> : null}
 
       <Card>
-        <Field label={t("toWhom", lang)}>
+        {scheduled.length > 0 ? (
+          <View style={{ gap: space.sm }}>
+            <Small>Already approved by {family?.guardianName ?? "Kavya"}:</Small>
+            {scheduled.map((saved) => (
+              <SecondaryButton
+                key={saved.address}
+                label={saved.name}
+                onPress={() => {
+                  setName("");
+                  setContact("");
+                  setContactError(undefined);
+                  setPayee({ address: saved.address, label: saved.name, scheduled: true });
+                }}
+              />
+            ))}
+          </View>
+        ) : null}
+
+        {payee && !name && !contact ? (
+          <Small>Sending to {payee.label}.</Small>
+        ) : null}
+
+        <Field label="Someone else: their name">
           <TextInput
-            value={to}
-            onChangeText={setTo}
-            placeholder="Paste who it's going to"
+            value={name}
+            onChangeText={(value) => {
+              setName(value);
+              setPayee(undefined);
+            }}
+            placeholder="Ravi Kumar"
+            placeholderTextColor={colors.inkFaint}
+            style={ui.input}
+            editable={!busy}
+          />
+        </Field>
+
+        <Field
+          label="Their phone number or email"
+          hint={contactError ?? (payee && (name || contact) ? `Sending to ${payee.label}.` : "With the country code, like +91 98765 43210.")}
+        >
+          <TextInput
+            value={contact}
+            onChangeText={(value) => {
+              setContact(value);
+              setPayee(undefined);
+            }}
+            placeholder="+91 98765 43210 or name@email.com"
             placeholderTextColor={colors.inkFaint}
             autoCapitalize="none"
             style={ui.input}
             editable={!busy}
           />
         </Field>
-
-        {scheduled.length > 0 ? (
-          <View style={{ gap: space.sm }}>
-            <Small>Already approved by {family?.guardianName ?? "Kavya"}:</Small>
-            {scheduled.map((payee) => (
-              <SecondaryButton
-                key={payee.address}
-                label={payee.name}
-                onPress={() => setTo(payee.address)}
-              />
-            ))}
-          </View>
-        ) : null}
 
         <Divider />
 

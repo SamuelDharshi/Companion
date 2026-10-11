@@ -52,6 +52,11 @@ const schema = z.object({
 
   DATA_DIR: z.string().default("./.data"),
   /**
+   * Secret salt that turns a phone number or email into a payee address. Blank derives one from the relayer key, which
+   * is stable for as long as that key is. Changing it changes every payee address, so set it once and keep it.
+   */
+  PAYEE_SALT: z.preprocess((v) => (v === "" ? undefined : v), z.string().regex(/^0x[0-9a-fA-F]{64}$/).optional()),
+  /**
    * Where event counting reads logs from. Blank uses MONAD_RPC_URL. Set it when the main RPC limits `eth_getLogs`
    * to a tiny range (a Quicknode Discover plan allows 5 blocks); the public testnet RPC allows 100.
    */

@@ -118,7 +118,7 @@ export type FamilyState = {
   };
   studentName: string;
   guardianName: string;
-  payees: { address: Address; name: string; scheduled: boolean }[];
+  payees: { address: Address; name: string; scheduled: boolean; contact?: string }[];
   inviteCode?: string;
   inviteAccepted: boolean;
   allowanceDue: boolean;
@@ -142,6 +142,8 @@ export type HoldState = {
   releaseAt: string;
   memoHash: Hex;
   payeeName?: string;
+  /** The contact the student typed, masked: "+91 ••••• 3210". */
+  payeeContact?: string;
   networkFlagCount: number;
   networkLastAt: number;
 };
@@ -254,6 +256,12 @@ export const api = {
   // payees
   addPayee: (payload: { familyId: string; address: Address; name: string; scheduled: boolean }) =>
     relayerPost<{ payeesRoot: Hex; payees: FamilyState["payees"] }>("/payees", payload),
+  /** Turns a name and a phone number or email into the person to pay. No address is ever typed or shown. */
+  resolvePayee: (payload: { familyId: string; name: string; contact: string }) =>
+    relayerPost<{ address: Address; name: string; contact: string; kind: "phone" | "email"; scheduled: boolean }>(
+      "/payee/resolve",
+      payload,
+    ),
   payees: (familyId: string) =>
     relayerGet<{ payeesRoot: Hex; payees: FamilyState["payees"] }>(`/payees/${familyId}`),
 

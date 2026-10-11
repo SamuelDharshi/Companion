@@ -19,6 +19,8 @@ export type PayeeRecord = {
   name: string;
   /** On the guardian-signed schedule, so immune to network flags. */
   scheduled: boolean;
+  /** The contact the family typed, masked for display ("+91 ••••• 3210"). Never the full number or email. */
+  contact?: string;
 };
 
 /**
@@ -175,6 +177,20 @@ export class Store {
     return this.getFamily(familyId)?.payees.find(
       (p) => p.address.toLowerCase() === address.toLowerCase(),
     )?.name;
+  }
+
+  /** The masked contact the family typed for this payee, if they paid by phone or email. */
+  payeeContact(familyId: string, address: Address): string | undefined {
+    return this.getFamily(familyId)?.payees.find(
+      (p) => p.address.toLowerCase() === address.toLowerCase(),
+    )?.contact;
+  }
+
+  /** "Ravi (+91 ••••• 3210)": the name with its masked contact, for alerts. */
+  payeeLabel(familyId: string, address: Address): string | undefined {
+    const name = this.payeeName(familyId, address);
+    const contact = this.payeeContact(familyId, address);
+    return name && contact ? `${name} (${contact})` : name;
   }
 
   feedbackDone(holdId: string): boolean {

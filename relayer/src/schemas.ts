@@ -136,11 +136,22 @@ export const reportBody = z.object({
   auth: webAuthnAuth,
 });
 
-export const addPayeeBody = z.object({
+export const addPayeeBody = z
+  .object({
+    familyId: bigintish,
+    /** Either an address (older callers) or the phone/email a family would actually type. */
+    address: address.optional(),
+    contact: z.string().min(3).max(120).optional(),
+    name: z.string().min(1).max(60),
+    scheduled: z.boolean().default(true),
+  })
+  .refine((v) => Boolean(v.address) !== Boolean(v.contact), { message: "Give either an address or a contact." });
+
+/** The student pays a new person by name and phone or email. The reply carries the address to pay. */
+export const resolvePayeeBody = z.object({
   familyId: bigintish,
-  address,
-  name: z.string().min(1).max(60),
-  scheduled: z.boolean().default(true),
+  name: z.string().trim().min(1).max(60),
+  contact: z.string().min(3).max(120),
 });
 
 export const subscribeBody = z.object({

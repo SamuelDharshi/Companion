@@ -602,6 +602,62 @@ try {
     "a scheduled payee is still paid: flags escalate, they never block",
   );
 
+  // ---- A new person by name and phone, with no address typed or shown.
+  log("11b/15", "A new person by name and phone: no address is typed or shown, and network flags follow the contact");
+  const ravi = await api("/payee/resolve", {
+    method: "POST",
+    body: JSON.stringify({ familyId: String(familyId), name: "Ravi Kumar", contact: "+91 98765 43210" }),
+  });
+  assert(/^0x[0-9a-fA-F]{40}$/.test(ravi.address) && ravi.scheduled === false, "a name and a phone number became a payee");
+  assert(ravi.contact === "+91 ••••• 3210" && !/0x/.test(ravi.contact), `the family sees "${ravi.name} (${ravi.contact})", never an address`);
+  const raviAgain = await api("/payee/resolve", {
+    method: "POST",
+    body: JSON.stringify({ familyId: String(familyId), name: "Ravi", contact: "+919876543210" }),
+  });
+  assert(raviAgain.address === ravi.address, "the same number typed another way is the same person");
+  const badContact = await fetch(`${RELAYER_URL}/payee/resolve`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ familyId: String(familyId), name: "Ravi", contact: "9876543210" }),
+  });
+  assert(badContact.status === 400, "a phone number without a country code is refused");
+
+  const raviSend = await sendMoney(ravi.address, 40, "a favour");
+  assert(raviSend.held === true && raviSend.reasonName === "NEW_PAYEE", `a new person is held (${raviSend.reasonName})`);
+  const raviHold = await api(`/hold/${raviSend.holdId}`);
+  assert(
+    raviHold.payeeName === "Ravi" && raviHold.payeeContact === "+91 ••••• 3210",
+    `Kavya's hold card reads "${raviHold.payeeName} (${raviHold.payeeContact})"`,
+  );
+  await api("/hold/resolve", {
+    method: "POST",
+    body: JSON.stringify({
+      holdId: String(raviSend.holdId),
+      release: false,
+      auth: signAssertion(ammaPasskey, resolveHoldChallenge(config.chainId, config.thunaiVault, familyId, BigInt(raviSend.holdId), false)),
+    }),
+  });
+  const raviHandle = keccak256(encodePacked(["address"], [ravi.address]));
+  await api("/report", {
+    method: "POST",
+    body: JSON.stringify({
+      familyId: String(familyId),
+      handleHash: raviHandle,
+      scriptId: 1,
+      holdId: String(raviSend.holdId),
+      auth: signAssertion(ammaPasskey, reportChallenge(config.chainId, config.scamSignals, familyId, raviHandle, 1, BigInt(raviSend.holdId))),
+    }),
+  });
+  const raviOtherSpelling = await api("/payee/resolve", {
+    method: "POST",
+    body: JSON.stringify({ familyId: String(familyId), name: "R. Kumar", contact: "+91-98765-43210" }),
+  });
+  const raviFlagged = await sendMoney(raviOtherSpelling.address, 30, "again");
+  assert(
+    raviFlagged.reasonName === "NETWORK_FLAG",
+    `a report follows the contact, however it is typed (${raviFlagged.reasonName})`,
+  );
+
   log("12/15", "Silent SOS: one tap pauses everything and tells Kavya, whatever the scammer wants");
   const freezeInfo = await api(`/freeze/digest?familyId=${familyId}`);
   const duressSignature = await duressAcct.sign({ hash: freezeInfo.digest });
