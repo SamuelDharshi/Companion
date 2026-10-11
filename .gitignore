@@ -60,3 +60,7 @@ frontend/package-lock.json
 .vercel/
 **/.vercel/
 .render.env
+
+cre/.env
+cre/**/node_modules/
+cre/**/dist/

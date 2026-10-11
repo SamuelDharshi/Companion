@@ -1,0 +1,9 @@
+{
+  "schedule": "0 */1 * * * *",
+  "chainSelectorName": "monad-testnet",
+  "vaultAddress": "0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87",
+  "agentUrl": "http://127.0.0.1:8788",
+  "maxFamilies": 25,
+  "maxHolds": 25,
+  "repageAfterSeconds": 120
+}

@@ -1,0 +1,6 @@
+# Chainlink CRE project for Companion. Only the public Monad testnet RPC is written here, because this file is
+# committed. A private RPC (Quicknode, Alchemy) belongs in .env as MONAD_RPC_URL and is substituted below.
+staging-settings:
+  rpcs:
+    - chain-name: monad-testnet
+      url: ${CRE_MONAD_RPC_URL}
