@@ -57,6 +57,11 @@ export class Keeper {
   /** One sweep. Overlapping runs are skipped so a slow RPC cannot double-send. */
   async tick(force = false) {
     if (!force && this.options.gate && !this.options.gate()) return;
+    if (force) {
+      // A forced sweep (the admin route, used by tests and demos) must really run: wait for a sweep already in
+      // progress instead of silently skipping, because that sweep may have started before the hold was due.
+      for (let waited = 0; this.running && waited < 120_000; waited += 250) await new Promise((r) => setTimeout(r, 250));
+    }
     if (this.running) return;
     this.running = true;
     this.lastTickAt = Date.now();

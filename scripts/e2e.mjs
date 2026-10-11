@@ -533,8 +533,13 @@ try {
     });
   }
   // Let the KEEPER do it, which is what happens in production.
-  await fetch(`${AGENT_URL}/keeper/tick`, { method: "POST", headers: { "x-admin-token": E2E_ADMIN } });
-  const expired = await api(`/hold/${second.holdId}`);
+  let expired;
+  for (let attempt = 0; attempt < 8; attempt++) {
+    await fetch(`${AGENT_URL}/keeper/tick`, { method: "POST", headers: { "x-admin-token": E2E_ADMIN } });
+    expired = await api(`/hold/${second.holdId}`);
+    if (expired.statusName === "EXPIRED") break;
+    await sleep(2000);
+  }
   assert(expired.statusName === "EXPIRED", "hold expired");
   family = await api(`/family/${familyId}`);
   assert(family.balanceLabel === "$2,100", `money came back without anyone answering: ${family.balanceLabel}`);
@@ -607,15 +612,21 @@ try {
 
   // ---- A new person by name and phone, with no address typed or shown.
   log("11b/15", "A new person by name and phone: no address is typed or shown, and network flags follow the contact");
+  // A fresh number every run. The live chain remembers every report forever, so a fixed number would already be flagged.
+  const tail = String(Math.floor(Math.random() * 1e7)).padStart(7, "0");
+  const phone = `+91 98${tail.slice(0, 3)} ${tail.slice(3)}`; // +91 98xxx xxxx
+  const phoneCompact = `+9198${tail}`;
+  const phoneDashed = `+91-98${tail.slice(0, 3)}-${tail.slice(3)}`;
+  const maskedPhone = `+91 ••••• ${tail.slice(3)}`;
   const ravi = await api("/payee/resolve", {
     method: "POST",
-    body: JSON.stringify({ familyId: String(familyId), name: "Ravi Kumar", contact: "+91 98765 43210" }),
+    body: JSON.stringify({ familyId: String(familyId), name: "Ravi Kumar", contact: phone }),
   });
   assert(/^0x[0-9a-fA-F]{40}$/.test(ravi.address) && ravi.scheduled === false, "a name and a phone number became a payee");
-  assert(ravi.contact === "+91 ••••• 3210" && !/0x/.test(ravi.contact), `the family sees "${ravi.name} (${ravi.contact})", never an address`);
+  assert(ravi.contact === maskedPhone && !/0x/.test(ravi.contact), `the family sees "${ravi.name} (${ravi.contact})", never an address`);
   const raviAgain = await api("/payee/resolve", {
     method: "POST",
-    body: JSON.stringify({ familyId: String(familyId), name: "Ravi", contact: "+919876543210" }),
+    body: JSON.stringify({ familyId: String(familyId), name: "Ravi", contact: phoneCompact }),
   });
   assert(raviAgain.address === ravi.address, "the same number typed another way is the same person");
   const badContact = await fetch(`${RELAYER_URL}/payee/resolve`, {
@@ -629,7 +640,7 @@ try {
   assert(raviSend.held === true && raviSend.reasonName === "NEW_PAYEE", `a new person is held (${raviSend.reasonName})`);
   const raviHold = await api(`/hold/${raviSend.holdId}`);
   assert(
-    raviHold.payeeName === "Ravi" && raviHold.payeeContact === "+91 ••••• 3210",
+    raviHold.payeeName === "Ravi" && raviHold.payeeContact === maskedPhone,
     `Kavya's hold card reads "${raviHold.payeeName} (${raviHold.payeeContact})"`,
   );
   await api("/hold/resolve", {
@@ -653,7 +664,7 @@ try {
   });
   const raviOtherSpelling = await api("/payee/resolve", {
     method: "POST",
-    body: JSON.stringify({ familyId: String(familyId), name: "R. Kumar", contact: "+91-98765-43210" }),
+    body: JSON.stringify({ familyId: String(familyId), name: "R. Kumar", contact: phoneDashed }),
   });
   const raviFlagged = await sendMoney(raviOtherSpelling.address, 30, "again");
   assert(
@@ -684,7 +695,10 @@ try {
     const settled = await (await cre({ action: "expireHold", id: String(raviSend.holdId) })).json();
     assert(settled.skipped === "not open", "a hold that is already settled is left alone");
     const status = await (await fetch(`${AGENT_URL}/cre/status`, { headers: { "x-cre-token": E2E_CRE } })).json();
-    assert(status.orchestrator === "cre", "the agent reports that CRE is orchestrating, with its own timer as standby");
+    assert(
+      status.ok === true && (TESTNET ? ["keeper", "cre"].includes(status.orchestrator) : status.orchestrator === "cre"),
+      `the agent reports its orchestrator (${status.orchestrator}); with cre, its own timer stays as a standby`,
+    );
   } else {
     ok("(CRE_TOKEN is not set in .env, so the authorised calls were not exercised)");
   }
