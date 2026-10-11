@@ -6,6 +6,7 @@ import { createChain, loadDeployment, VaultService } from "@thunai/evm";
 import {
   HOLD_REASON,
   HOLD_REASON_NAME,
+  HOLD_STATUS,
   SCAM_SCRIPT_NAME,
   formatUsd,
   toDollars,
@@ -91,6 +92,9 @@ type HoldBrief = {
 
 const briefs = new Map<string, HoldBrief>();
 
+/** When the Chainlink CRE workflow last called in. Only meaningful when ORCHESTRATOR=cre. */
+let lastCreAt = 0;
+
 /** Family display names and push targets live on the relayer; the agent borrows them. */
 async function relayer<T>(path: string): Promise<T | undefined> {
   try {
@@ -131,6 +135,8 @@ const INTERNAL_PATHS = new Set([
   "/sos-detail",
 ]);
 const ADMIN_PATHS = new Set(["/classify", "/keeper/tick"]);
+/** Only the Chainlink CRE workflow, with CRE_TOKEN. Fails closed when no token is configured. */
+const CRE_PATHS = new Set(["/cre/apply", "/cre/status"]);
 
 app.addHook("onRequest", async (request, reply) => {
   const path = request.url.split("?")[0] ?? "";
@@ -139,6 +145,11 @@ app.addHook("onRequest", async (request, reply) => {
     if (!sameSecret(request.headers["x-admin-token"], env.DEV_ADMIN_TOKEN)) {
       return reply.code(401).send({ error: "Admin token required." });
     }
+  } else if (CRE_PATHS.has(path)) {
+    if (!sameSecret(request.headers["x-cre-token"], env.CRE_TOKEN)) {
+      return reply.code(env.CRE_TOKEN ? 401 : 503).send({ error: "CRE endpoint." });
+    }
+    lastCreAt = Date.now();
   } else if (INTERNAL_PATHS.has(path)) {
     if (!sameSecret(request.headers["x-internal-token"], env.INTERNAL_TOKEN)) {
       return reply.code(env.INTERNAL_TOKEN ? 401 : 503).send({ error: "Internal endpoint." });
@@ -398,20 +409,99 @@ const keeper = new Keeper({
   intervalMs: env.KEEPER_INTERVAL_MS,
   log: app.log,
   onHoldExpired: (holdId) => briefs.delete(String(holdId)),
+  // With a CRE workflow in charge, this timer is a standby that only runs once the workflow has gone quiet.
+  gate: env.ORCHESTRATOR === "cre" ? () => Date.now() - lastCreAt > env.CRE_GRACE_MS : undefined,
 });
+
+/**
+ * What the Chainlink CRE workflow may ask the agent to do. The workflow does the reading and the deciding of WHEN; this
+ * only does the same two safe things the keeper does (any stranger may call both on the contract), plus one reminder:
+ *
+ *   runAllowance  runs the family's signed envelope if it is due, otherwise says "not due"
+ *   expireHold    returns an unanswered hold's money to the student if its time is up, otherwise says "not yet"
+ *   repage        pages the guardian again about a hold that is still open
+ *
+ * Nothing here can pay a payee. Each action is re-checked against the chain before it is sent, so a stale or forged
+ * request does nothing.
+ */
+const creApplyBody = z.object({
+  action: z.enum(["runAllowance", "expireHold", "repage"]),
+  id: z.union([z.string(), z.number()]),
+});
+
+app.post("/cre/apply", async (request, reply) => {
+  const parsed = creApplyBody.safeParse(request.body);
+  if (!parsed.success) return reply.code(400).send({ error: "action and id are required." });
+  const { action } = parsed.data;
+  let id: bigint;
+  try {
+    id = BigInt(parsed.data.id);
+  } catch {
+    return reply.code(400).send({ error: "id must be a whole number." });
+  }
+
+  if (action === "runAllowance") {
+    if (!(await vault.allowanceDue(id).catch(() => false))) return json({ ok: true, skipped: "not due" });
+    const tx = await vault.runAllowance(id);
+    app.log.info({ familyId: String(id), txHash: tx.hash, by: "cre" }, "allowance sent");
+    return json({ ok: true, txHash: tx.hash, latencyMs: Math.round(tx.latencyMs) });
+  }
+
+  const hold = await vault.readHold(id).catch(() => null);
+  if (!hold || hold.status !== HOLD_STATUS.OPEN) return json({ ok: true, skipped: "not open" });
+
+  if (action === "expireHold") {
+    if ((await vault.latestBlockTimestamp()) < hold.releaseAt) return json({ ok: true, skipped: "not yet" });
+    const tx = await vault.expireHold(id);
+    briefs.delete(String(id));
+    app.log.info({ holdId: String(id), txHash: tx.hash, by: "cre" }, "hold expired: money returned to the student");
+    return json({ ok: true, txHash: tx.hash, latencyMs: Math.round(tx.latencyMs) });
+  }
+
+  // repage
+  const brief = briefs.get(String(id));
+  if (!brief) return json({ ok: true, skipped: "no briefing (the agent restarted)" });
+  const subs = await relayer<{ subscriptions: PushTarget[] }>(`/subscriptions/${brief.familyId}`);
+  const guardians = (subs?.subscriptions ?? []).filter((s) => s.role === "guardian");
+  const reminder = { ...brief.alert, title: `Still waiting: ${brief.alert.title}` };
+  const pagedDevices = guardians.length > 0 ? await pager.page(guardians, reminder) : 0;
+  return json({
+    ok: true,
+    pagedDevices,
+    classification: { scriptId: brief.classification.scriptId, source: brief.classifierSource },
+    whatsAppLink: brief.whatsAppLink,
+  });
+});
+
+/** The workflow's read of the agent: how it is configured and what it has classified. Used for the first call. */
+app.get("/cre/status", async () => ({
+  ok: true,
+  orchestrator: env.ORCHESTRATOR,
+  standbyKeeperAfterMs: env.CRE_GRACE_MS,
+  classifier: classifier.enabled ? env.CLASSIFIER_MODEL : "deterministic rules (no API key)",
+  openBriefs: [...briefs.values()].map((b) => ({
+    holdId: b.holdId,
+    scriptId: b.classification.scriptId,
+    confidence: b.classification.confidence,
+    source: b.classifierSource,
+    openedAt: b.openedAt,
+  })),
+}));
 
 app.get("/health", async () => ({
   ok: true,
   uptime: process.uptime(),
   classifier: classifier.enabled ? env.CLASSIFIER_MODEL : "deterministic rules (no API key)",
   keeper: keeper.status(),
+  orchestrator: env.ORCHESTRATOR,
+  creLastSeenAt: lastCreAt || null,
   agentAddress: chain.account.address,
   vault: deployment.thunaiVault,
 }));
 
 /** Lets the demo force a sweep instead of waiting for the next minute. */
 app.post("/keeper/tick", async () => {
-  await keeper.tick();
+  await keeper.tick(true);
   return json(keeper.status());
 });
 

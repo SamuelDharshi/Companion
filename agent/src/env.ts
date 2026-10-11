@@ -56,6 +56,17 @@ const schema = z.object({
     .default("true")
     .transform((v) => v !== "false"),
 
+  /**
+   * Who drives the keeper's two jobs (run due allowances, expire unanswered holds).
+   * `keeper` is this process's own timer. `cre` hands the schedule to a Chainlink CRE workflow, which reads the chain
+   * and calls /cre/apply here; this process then keeps its own timer only as a standby, used when no CRE call has
+   * arrived for CRE_GRACE_MS, so a stopped workflow can never leave an allowance unsent or a hold unexpired.
+   */
+  ORCHESTRATOR: z.enum(["keeper", "cre"]).default("keeper"),
+  /** The secret the CRE workflow presents. Unset means /cre/* does not answer at all. */
+  CRE_TOKEN: z.preprocess((v) => (v === "" ? undefined : v), z.string().min(16).optional()),
+  CRE_GRACE_MS: z.coerce.number().default(300_000),
+
   CORS_ORIGIN: z.string().default("*"),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
 });

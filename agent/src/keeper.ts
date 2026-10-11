@@ -23,6 +23,8 @@ export type KeeperOptions = {
     warn: (...a: any[]) => void;
     error: (...a: any[]) => void;
   };
+  /** When it returns false the timer's sweep is skipped (another orchestrator is in charge). */
+  gate?: () => boolean;
   /** Called after a hold expires, so the family can be told their money came back. */
   onHoldExpired?: (holdId: bigint, familyId: bigint, amount: bigint) => void;
 };
@@ -53,7 +55,8 @@ export class Keeper {
   }
 
   /** One sweep. Overlapping runs are skipped so a slow RPC cannot double-send. */
-  async tick() {
+  async tick(force = false) {
+    if (!force && this.options.gate && !this.options.gate()) return;
     if (this.running) return;
     this.running = true;
     this.lastTickAt = Date.now();
