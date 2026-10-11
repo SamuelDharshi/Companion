@@ -17,7 +17,7 @@ config, schema and handlers agree with the compiled contracts.
 
 ## Steps you do by hand
 
-1. Push this repository to GitHub (the `.env` is git-ignored; nothing secret is in the repo).
+1. The repository is already on GitHub (`SamuelDharshi/Companion`, branch `main`). The `.env` is git-ignored; nothing secret is in the repo.
 2. Go to **envio.dev**, sign in with GitHub, and choose **Add Indexer**.
 3. Pick the repository and set the **root directory** to `indexer`.
 4. Branch: the one you pushed. Config file: `config.yaml`. Leave the environment variables empty.
@@ -27,13 +27,19 @@ config, schema and handlers agree with the compiled contracts.
    ```graphql
    query { NetworkStats(where: { id: { _eq: "global" } }) { families holdsOpened scamsStopped sosRaised } }
    ```
-7. Give me that endpoint, or put it in `.env` yourself as `EXPO_PUBLIC_INDEXER_URL=<endpoint>` and restart
-   `pnpm dev`.
+7. Send that endpoint. Wiring it takes three settings and a redeploy of the site:
+   - `.env`: `EXPO_PUBLIC_INDEXER_URL=<endpoint>` (it is public by nature; the app bundle reads it at build time),
+   - Vercel project `companion-monad`: `ENVIO_GRAPHQL_URL=<endpoint>` (read on the server by `/traction`),
+   - then `node scripts/build-web.mjs` and `cd frontend && vercel deploy --prod`.
 
 ## What changes once it is live
 
 - The **"Families protected"** screen reads the indexer first. The Saves, Allowances and Checks cards appear
   (they need event history), and the source line reads "Envio indexer".
+- **`/traction`** on the site reads its event counters (holds, saves, median time to stop, checks, reports, SOS) from the
+  indexer and says "Envio HyperIndex". The split between real families and our own test runs still comes from the relayer, which
+  alone knows which families are the fictional ones. If the indexer does not answer, the page falls back to the relayer's count
+  and says so. Tested against a stand-in GraphQL server in both directions.
 - The **evidence on a hold card** ("N verified families reported this payee") reads the indexer's `Signal`
   entity.
 - Under **Details**, "public counters" and "hold evidence" name the active source.
