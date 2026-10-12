@@ -21,6 +21,11 @@ export type Tally = {
   lastBlock: number;
   families: number;
   testFamilies: number;
+  /**
+   * Families this relayer has no record of (for example, made before a restart wiped its data on a host without a disk).
+   * Nobody can say whether they were real people, so they are never counted as real.
+   */
+  unknownFamilies?: number;
   holdsOpened: number;
   scamsStopped: number;
   holdsReleased: number;
@@ -49,6 +54,7 @@ const empty = (vault: Address, startBlock: number): Tally => ({
   lastBlock: startBlock - 1,
   families: 0,
   testFamilies: 0,
+  unknownFamilies: 0,
   holdsOpened: 0,
   scamsStopped: 0,
   holdsReleased: 0,
@@ -85,8 +91,8 @@ export class TallyFollower {
     private readonly signals: Address,
     startBlock: number,
     dir: string,
-    /** True if a family is our own test family. Decided when its event is read. */
-    private readonly isTestFamily: (familyId: string) => boolean,
+    /** Whether a family is our own test family, a real one, or one we have no record of. Decided when its event is read. */
+    private readonly classifyFamily: (familyId: string) => "test" | "real" | "unknown",
     private readonly log: { info: (...a: any[]) => void; warn: (...a: any[]) => void },
   ) {
     mkdirSync(dir, { recursive: true });
@@ -110,7 +116,7 @@ export class TallyFollower {
       ...t,
       medianSaveSeconds: median(t.saveSeconds),
       fastestSaveSeconds: t.saveSeconds.length ? Math.min(...t.saveSeconds) : 0,
-      realFamilies: t.families - t.testFamilies,
+      realFamilies: t.families - t.testFamilies - (t.unknownFamilies ?? 0),
     };
   }
 
@@ -167,13 +173,15 @@ export class TallyFollower {
       switch (e.eventName) {
         case "FamilyRegistered": {
           t.families += 1;
-          if (this.isTestFamily(String(a.familyId))) t.testFamilies += 1;
+          const kind = this.classifyFamily(String(a.familyId));
+          if (kind === "test") t.testFamilies += 1;
+          else if (kind === "unknown") t.unknownFamilies = (t.unknownFamilies ?? 0) + 1;
           note("family_registered", e as never, a.familyId);
           break;
         }
         case "HoldOpened": {
           t.holdsOpened += 1;
-          t.open[String(a.holdId)] = { amount: String(a.amount), test: this.isTestFamily(String(a.familyId)) };
+          t.open[String(a.holdId)] = { amount: String(a.amount), test: this.classifyFamily(String(a.familyId)) !== "real" };
           note("hold_opened", e as never, a.familyId);
           break;
         }

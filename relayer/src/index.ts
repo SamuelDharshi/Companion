@@ -84,10 +84,12 @@ const tally = new TallyFollower(
   deployment.scamSignals as Address,
   tallyStart,
   env.DATA_DIR,
-  // Our own end-to-end runs create the fictional Arjun and Kavya. Counted apart from real families.
+  // Our own end-to-end runs create the fictional Arjun and Kavya, counted apart from real families. A family this relayer
+  // has no record of (its data was wiped by a restart) is "unknown", never "real": we only claim a real family we can see.
   (familyId) => {
     const record = store.getFamily(familyId);
-    return record?.studentName === "Arjun" && record?.guardianName === "Kavya";
+    if (!record) return "unknown";
+    return record.studentName === "Arjun" && record.guardianName === "Kavya" ? "test" : "real";
   },
   app.log,
 );
@@ -237,7 +239,7 @@ app.get("/traction", async () => {
     vault: deployment.thunaiVault,
     countedFromBlock: t.startBlock,
     countedToBlock: t.lastBlock,
-    families: { total: t.families, real: t.realFamilies, test: t.testFamilies },
+    families: { total: t.families, real: t.realFamilies, test: t.testFamilies, unknown: t.unknownFamilies ?? 0 },
     holdsOpened: t.holdsOpened,
     scamsStopped: t.scamsStopped,
     holdsReleased: t.holdsReleased,

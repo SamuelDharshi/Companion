@@ -55,7 +55,9 @@ function run(command, args, options = {}) {
 // 1. Export the app, mounted at /app, talking to same-origin /relayer and /agent.
 console.log("\n[1/2] Exporting the Companion app to frontend/public/app ...\n");
 if (existsSync(outDir)) rmSync(outDir, { recursive: true, force: true });
-run("pnpm", ["exec", "expo", "export", "--platform", "web", "--output-dir", JSON.stringify(outDir)], {
+// --clear: Expo inlines EXPO_PUBLIC_ values at build time, and a cached build keeps the old ones (an indexer address
+// added to .env would otherwise never reach the bundle).
+run("pnpm", ["exec", "expo", "export", "--platform", "web", "--clear", "--output-dir", JSON.stringify(outDir)], {
   cwd: appDir,
   env: {
     ...process.env,

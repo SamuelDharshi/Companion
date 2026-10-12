@@ -15,7 +15,7 @@ type Traction = {
   vault: string;
   countedFromBlock: number;
   countedToBlock: number;
-  families: { total: number; real: number; test: number };
+  families: { total: number; real: number; test: number; unknown?: number };
   holdsOpened: number;
   scamsStopped: number;
   holdsReleased: number;
@@ -158,8 +158,13 @@ export default async function TractionPage() {
 
             <div className="mt-8 rounded-3xl bg-brand-tint p-6 text-[15px] leading-relaxed text-ink-muted">
               <b className="text-ink">How to read this honestly.</b> Of {t.families.total} families on this deployment,{" "}
-              {t.families.real} signed up themselves and {t.families.test} are our own automated test runs (the fictional
-              Arjun and Kavya). The test runs are counted in the activity below but never in &quot;Real families&quot;. Counted
+              {t.families.real} signed up themselves, {t.families.test} are our own automated test runs (the fictional Arjun
+              and Kavya)
+              {t.families.unknown
+                ? `, and ${t.families.unknown} we cannot classify because our server's records were reset (most are our own tests)`
+                : ""}
+              . Only families we can see signed up themselves count as &quot;Real families&quot;; tests and unknowns are
+              counted in the activity below but never there. Counted
               from block {t.countedFromBlock.toLocaleString("en-US")} to {t.countedToBlock.toLocaleString("en-US")} on {t.network}.
               {" "}Event counters are read from <b className="text-ink">{source}</b>; the split between real and test families comes
               from our relayer, which knows which families are the fictional ones.
