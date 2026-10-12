@@ -1,4 +1,4 @@
-# Thunai indexer (Envio HyperIndex)
+# Thunai indexer (Envio HyperIndex 3)
 #
 # This is not decoration: the indexer is what makes the rescue fast enough to matter.
 # It drives the guardian's alert feed, the evidence line on a hold card ("1 verified
@@ -13,7 +13,7 @@ description: Family money agent for Indian parents with a child studying abroad
 # deploy block read from contracts/broadcast). They are written out rather than read from environment
 # variables so that Envio's hosted service, which builds from this file, needs no extra settings.
 # After a redeploy, update the three values marked "deployment".
-networks:
+chains:
   - id: 10143 # Monad testnet
     start_block: 70125515 # deployment: the block ThunaiVault was created in
     contracts:
@@ -44,6 +44,12 @@ networks:
         events:
           - event: Reported(bytes32 indexed handleHash, uint8 scriptId, uint256 indexed holdId, uint256 indexed familyId, uint32 reports)
           - event: Rebutted(bytes32 indexed handleHash, string uri)
+
+# Envio 3 leaves transaction fields empty unless they are asked for. The handlers record each event's transaction hash,
+# so a judge can open any row on the explorer.
+field_selection:
+  transaction_fields:
+    - hash
 
 # Raw events are kept so a judge can audit any claim the UI makes.
 raw_events: true

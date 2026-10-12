@@ -6,12 +6,10 @@
  * exposed here is derived from an event the contract actually emitted, so anything on
  * screen can be audited against the chain.
  */
-import {
-  ThunaiVault,
-  ScamSignals,
-  type Family,
-  type NetworkStats,
-} from "generated";
+import { indexer, type Entity } from "envio";
+
+type Family = Entity<"Family">;
+type NetworkStats = Entity<"NetworkStats">;
 
 const GLOBAL = "global";
 
@@ -68,7 +66,7 @@ function median(values: number[]): number {
 
 // --------------------------------------------------------------- onboarding
 
-ThunaiVault.FamilyRegistered.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "ThunaiVault", event: "FamilyRegistered" }, async ({ event, context }) => {
   const family: Family = {
     id: event.params.familyId.toString(),
     student: event.params.studentAcct,
@@ -97,7 +95,7 @@ ThunaiVault.FamilyRegistered.handler(async ({ event, context }) => {
   });
 });
 
-ThunaiVault.EnvelopeSet.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "ThunaiVault", event: "EnvelopeSet" }, async ({ event, context }) => {
   const id = event.params.familyId.toString();
   const family = await context.Family.get(id);
   if (!family) return;
@@ -112,7 +110,7 @@ ThunaiVault.EnvelopeSet.handler(async ({ event, context }) => {
 
 // ------------------------------------------------------------------ funding
 
-ThunaiVault.Funded.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "ThunaiVault", event: "Funded" }, async ({ event, context }) => {
   const id = event.params.familyId.toString();
   const family = await context.Family.get(id);
   if (!family) return;
@@ -120,7 +118,7 @@ ThunaiVault.Funded.handler(async ({ event, context }) => {
 });
 
 /** The allowance arriving. This is the "Sunday $150 from Amma arrived" row. */
-ThunaiVault.Payout.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "ThunaiVault", event: "Payout" }, async ({ event, context }) => {
   const id = event.params.familyId.toString();
 
   context.Payout.set({
@@ -162,7 +160,7 @@ ThunaiVault.Payout.handler(async ({ event, context }) => {
 // -------------------------------------------------------------------- holds
 
 /** The moment the money stops. Everything the alert needs is in this one event. */
-ThunaiVault.HoldOpened.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "ThunaiVault", event: "HoldOpened" }, async ({ event, context }) => {
   const familyId = event.params.familyId.toString();
   const reason = Number(event.params.reason);
 
@@ -203,7 +201,7 @@ ThunaiVault.HoldOpened.handler(async ({ event, context }) => {
 });
 
 /** The guardian decided. A cancel is a save; a release is a payment they approved. */
-ThunaiVault.HoldResolved.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "ThunaiVault", event: "HoldResolved" }, async ({ event, context }) => {
   const holdId = event.params.holdId.toString();
   const hold = await context.Hold.get(holdId);
   if (!hold) return;
@@ -246,7 +244,7 @@ ThunaiVault.HoldResolved.handler(async ({ event, context }) => {
 });
 
 /** Nobody answered, so the money went back by itself. The fail-safe, recorded. */
-ThunaiVault.HoldExpired.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "ThunaiVault", event: "HoldExpired" }, async ({ event, context }) => {
   const holdId = event.params.holdId.toString();
   const hold = await context.Hold.get(holdId);
   if (!hold) return;
@@ -271,7 +269,7 @@ ThunaiVault.HoldExpired.handler(async ({ event, context }) => {
   });
 });
 
-ThunaiVault.Withdrawn.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "ThunaiVault", event: "Withdrawn" }, async ({ event, context }) => {
   context.Withdrawal.set({
     id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
     family_id: event.params.familyId.toString(),
@@ -285,7 +283,7 @@ ThunaiVault.Withdrawn.handler(async ({ event, context }) => {
 
 // ------------------------------------------------------- check on the child
 
-ThunaiVault.CheckRequested.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "ThunaiVault", event: "CheckRequested" }, async ({ event, context }) => {
   const familyId = event.params.familyId.toString();
   context.Check.set({
     id: `${familyId}_${event.params.nonce.toString()}`,
@@ -306,7 +304,7 @@ ThunaiVault.CheckRequested.handler(async ({ event, context }) => {
 });
 
 /** "Signed on Arjun's phone, 0.9s ago." A voice can be cloned; this cannot. */
-ThunaiVault.LivenessProved.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "ThunaiVault", event: "LivenessProved" }, async ({ event, context }) => {
   const familyId = event.params.familyId.toString();
   const id = `${familyId}_${event.params.nonce.toString()}`;
   const check = await context.Check.get(id);
@@ -329,12 +327,12 @@ ThunaiVault.LivenessProved.handler(async ({ event, context }) => {
 
 // ------------------------------------------------------------------ freeze
 
-ThunaiVault.Frozen.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "ThunaiVault", event: "Frozen" }, async ({ event, context }) => {
   const family = await context.Family.get(event.params.familyId.toString());
   if (family) context.Family.set({ ...family, frozen: true });
 });
 
-ThunaiVault.Unfrozen.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "ThunaiVault", event: "Unfrozen" }, async ({ event, context }) => {
   const family = await context.Family.get(event.params.familyId.toString());
   if (family) context.Family.set({ ...family, frozen: false });
 });
@@ -345,7 +343,7 @@ ThunaiVault.Unfrozen.handler(async ({ event, context }) => {
  * The student pressed Silent SOS. The family is frozen in the same transaction (the Frozen event
  * handler above sets that), so this only records the SOS and counts it.
  */
-ThunaiVault.SOSRaised.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "ThunaiVault", event: "SOSRaised" }, async ({ event, context }) => {
   const familyId = event.params.familyId.toString();
   context.Sos.set({
     id: `${event.transaction.hash}-${event.logIndex}`,
@@ -364,7 +362,7 @@ ThunaiVault.SOSRaised.handler(async ({ event, context }) => {
 // --------------------------------------------------------- encrypted notes
 
 /** Only the version moves. The ciphertext stays in the contract, and nothing here can read it. */
-ThunaiVault.NotesStored.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "ThunaiVault", event: "NotesStored" }, async ({ event, context }) => {
   const family = await context.Family.get(event.params.familyId.toString());
   if (!family) return;
   const version = Number(event.params.version);
@@ -384,7 +382,7 @@ ThunaiVault.NotesStored.handler(async ({ event, context }) => {
  * this number, 2 minutes ago". The count only ever raises the hold level; it never
  * refuses a payment on its own, and a payee on a family's own signed schedule is immune.
  */
-ScamSignals.Reported.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "ScamSignals", event: "Reported" }, async ({ event, context }) => {
   const handleHash = event.params.handleHash;
   const existing = await context.Signal.get(handleHash);
 
@@ -415,7 +413,7 @@ ScamSignals.Reported.handler(async ({ event, context }) => {
 });
 
 /** The flagged party's response. Appended, never used to silence a report. */
-ScamSignals.Rebutted.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "ScamSignals", event: "Rebutted" }, async ({ event, context }) => {
   const existing = await context.Signal.get(event.params.handleHash);
   if (!existing) return;
   context.Signal.set({

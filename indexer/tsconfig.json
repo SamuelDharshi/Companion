@@ -2,13 +2,18 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "lib": ["ES2022"],
-    "paths": { "generated": ["./generated/src/Types.gen.ts"] }
+    "lib": [
+      "ES2022"
+    ]
   },
-  "include": ["src", "test"]
+  "include": [
+    "src",
+    "test",
+    "envio-env.d.ts"
+  ]
 }
