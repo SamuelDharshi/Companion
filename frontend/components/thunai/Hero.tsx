@@ -40,11 +40,14 @@ export default function Hero() {
           </p>
         </div>
 
-        <div className="relative flex justify-center gap-5 lg:justify-end">
-          <div className="hidden translate-y-10 sm:block">
+        {/* A gentle 3D lean on the two phones; it straightens when hovered. */}
+        <div className="relative flex justify-center gap-5 [perspective:1600px] lg:justify-end">
+          <div className="hidden translate-y-10 transition-transform duration-500 [transform:rotateY(14deg)_rotateX(4deg)] hover:[transform:rotateY(0deg)_rotateX(0deg)] sm:block">
             <StudentHome />
           </div>
-          <HeldForSafety />
+          <div className="transition-transform duration-500 [transform:rotateY(-10deg)_rotateX(4deg)] hover:[transform:rotateY(0deg)_rotateX(0deg)]">
+            <HeldForSafety />
+          </div>
         </div>
       </div>
     </section>

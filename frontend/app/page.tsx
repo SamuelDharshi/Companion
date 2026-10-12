@@ -1,5 +1,6 @@
 import Navbar from "@/components/thunai/Navbar";
 import Hero from "@/components/thunai/Hero";
+import Crossing from "@/components/thunai/Crossing";
 import MobileApp from "@/components/thunai/MobileApp";
 import Proof from "@/components/thunai/Proof";
 import Safeguards from "@/components/thunai/Safeguards";
@@ -11,6 +12,7 @@ export default function Home() {
     <main className="flex w-full flex-col bg-white">
       <Navbar />
       <Hero />
+      <Crossing />
       <MobileApp />
       <Proof />
       <Safeguards />
