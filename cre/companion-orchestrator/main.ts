@@ -63,6 +63,14 @@ const vaultAbi = parseAbi([
   "function hold(uint256 holdId) view returns ((uint256 familyId, address to, uint128 amount, uint8 reason, uint8 status, uint64 openedAt, uint64 releaseAt, bytes32 memoHash))",
 ])
 
+// CRE allows only 15 chain reads per workflow run, and this loop would otherwise make one per family and per hold. Multicall3
+// (the same contract at the same address on every chain, including Monad testnet) lets one read carry many calls, so a whole
+// run costs two chain reads however many families and holds there are.
+const MULTICALL3 = "0xcA11bde05977b3631167028862bE2a173976CA11" as Address
+const multicallAbi = parseAbi([
+  "function aggregate3((address target, bool allowFailure, bytes callData)[] calls) payable returns ((bool success, bytes returnData)[] returnData)",
+])
+
 type Applied = { status: number; body: string }
 
 /** One authenticated call to the agent. Runs on the DON with consensus; `cacheSettings` makes exactly one node send it. */
@@ -109,43 +117,69 @@ const onCron = (runtime: Runtime<Config>): string => {
   const vault = config.vaultAddress as Address
   const token = runtime.getSecret({ id: "CRE_TOKEN" }).result().value
 
-  const read = (functionName: "familyCount" | "holdCount" | "allowanceDue" | "hold", args: readonly unknown[] = []): any => {
+  /** One chain read that carries many vault calls. Results come back in the same order, decoded. */
+  const readMany = (calls: { functionName: "familyCount" | "holdCount" | "allowanceDue" | "hold"; args?: readonly unknown[] }[]): any[] => {
+    const encoded = calls.map((c) => ({
+      target: vault,
+      allowFailure: true,
+      callData: encodeFunctionData({ abi: vaultAbi, functionName: c.functionName, args: c.args ?? [] } as never),
+    }))
     const reply = evm
       .callContract(runtime, {
         call: encodeCallMsg({
           from: zeroAddress,
-          to: vault,
-          data: encodeFunctionData({ abi: vaultAbi, functionName, args } as never),
+          to: MULTICALL3,
+          data: encodeFunctionData({ abi: multicallAbi, functionName: "aggregate3", args: [encoded] }),
         }),
         blockNumber: LATEST_BLOCK_NUMBER,
       })
       .result()
-    return decodeFunctionResult({ abi: vaultAbi, functionName, data: bytesToHex(reply.data) } as never)
+    const results = decodeFunctionResult({ abi: multicallAbi, functionName: "aggregate3", data: bytesToHex(reply.data) }) as readonly {
+      success: boolean
+      returnData: `0x${string}`
+    }[]
+    return results.map((r, i) =>
+      r.success
+        ? decodeFunctionResult({ abi: vaultAbi, functionName: calls[i].functionName, data: r.returnData } as never)
+        : undefined,
+    )
   }
 
   const nowSeconds = Math.floor(runtime.now().getTime() / 1000)
-  const families = Number(read("familyCount") as bigint)
-  const holds = Number(read("holdCount") as bigint)
+  const [familyCountRaw, holdCountRaw] = readMany([{ functionName: "familyCount" }, { functionName: "holdCount" }])
+  const families = Number(familyCountRaw as bigint)
+  const holds = Number(holdCountRaw as bigint)
   runtime.log(`Read Monad testnet: ${families} families, ${holds} holds`)
+
+  // Second and last chain read: every family's allowance flag and every recent hold, in one call.
+  const familyIds = Array.from({ length: Math.min(families, config.maxFamilies) }, (_, k) => k + 1)
+  const oldest = Math.max(1, holds - config.maxHolds + 1)
+  const holdIds = Array.from({ length: holds >= oldest ? holds - oldest + 1 : 0 }, (_, k) => holds - k)
+  const batch = readMany([
+    ...familyIds.map((id) => ({ functionName: "allowanceDue" as const, args: [BigInt(id)] })),
+    ...holdIds.map((id) => ({ functionName: "hold" as const, args: [BigInt(id)] })),
+  ])
+  const due = batch.slice(0, familyIds.length) as (boolean | undefined)[]
+  const holdRows = batch.slice(familyIds.length) as ({ status: number; openedAt: bigint; releaseAt: bigint } | undefined)[]
+  runtime.log(`Checked ${familyIds.length} allowances and ${holdIds.length} recent holds in one read`)
 
   const summary = { families, holds, allowancesSent: 0, holdsExpired: 0, parentsReminded: 0, skipped: 0, failed: 0 }
 
   // 1. Allowances that are due.
-  for (let familyId = 1; familyId <= Math.min(families, config.maxFamilies); familyId++) {
-    if (!(read("allowanceDue", [BigInt(familyId)]) as boolean)) continue
+  familyIds.forEach((familyId, k) => {
+    if (due[k] !== true) return
     const reply = callAgent(runtime, token, "runAllowance", BigInt(familyId))
     if (succeeded(reply) && !reply.detail?.skipped) {
       summary.allowancesSent++
       runtime.log(`Allowance due for family ${familyId}: sent`)
     } else if (succeeded(reply)) summary.skipped++
     else summary.failed++
-  }
+  })
 
   // 2. Holds nobody has answered, newest first.
-  const oldest = Math.max(1, holds - config.maxHolds + 1)
-  for (let holdId = holds; holdId >= oldest; holdId--) {
-    const h = read("hold", [BigInt(holdId)]) as { status: number; openedAt: bigint; releaseAt: bigint }
-    if (Number(h.status) !== HOLD_OPEN) continue
+  holdIds.forEach((holdId, k) => {
+    const h = holdRows[k]
+    if (!h || Number(h.status) !== HOLD_OPEN) return
 
     if (nowSeconds >= Number(h.releaseAt)) {
       const reply = callAgent(runtime, token, "expireHold", BigInt(holdId))
@@ -154,7 +188,7 @@ const onCron = (runtime: Runtime<Config>): string => {
         runtime.log(`Hold ${holdId} unanswered past its time: money returned to the student`)
       } else if (succeeded(reply)) summary.skipped++
       else summary.failed++
-      continue
+      return
     }
 
     // Remind the parent once, in the minute after the hold has been open for repageAfterSeconds.
@@ -169,7 +203,7 @@ const onCron = (runtime: Runtime<Config>): string => {
       } else if (succeeded(reply)) summary.skipped++
       else summary.failed++
     }
-  }
+  })
 
   runtime.log(`Done: ${JSON.stringify(summary)}`)
   return JSON.stringify(summary)
