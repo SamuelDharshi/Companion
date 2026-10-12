@@ -23,7 +23,7 @@ Why one origin matters for this product:
 | Part | Where | How it is updated |
 |---|---|---|
 | Site, with the app at `/app` | Vercel project `companion-monad` | `node scripts/build-web.mjs` (exports the app into `frontend/public/app`), then `cd frontend && vercel deploy --prod` |
-| Relayer and agent | Render web service `companion-api` (Starter plan, 1 GB disk) | Render redeploys on every push to `main` |
+| Relayer and agent | Render web service `companion-api` (**free** plan, no disk) | Render redeploys on every push to `main` |
 
 The Vercel project reads two server-side variables, `RELAYER_URL` and `AGENT_URL`. They point at Render and are
 **baked in at build time**, so changing them needs a redeploy:
@@ -39,8 +39,9 @@ Build on Vercel itself, not with `vercel build` on Windows (it cannot create the
 
 ## The Render service, step by step (once)
 
-1. Create a Render account and add a payment method. Use the **Starter** plan: a free service sleeps, and a sleeping
-   service has no keeper, so an unanswered hold would not expire and the weekly allowance would not run.
+1. Create a free Render account (no card needed) and connect your GitHub.
+   The blueprint uses the **free** plan. A free service sleeps after 15 minutes without inbound requests, and a sleeping
+   service has no keeper, so an unanswered hold would not expire and the weekly allowance would not run. Step 6 below keeps it awake.
 2. **New, Blueprint**, pick the `Companion` repository. Render reads `render.yaml` and proposes `companion-api`.
 3. Fill the values marked `sync: false`. To avoid typing, run this on your machine and paste from the file it writes:
 
@@ -54,12 +55,18 @@ Build on Vercel itself, not with `vercel build` on Windows (it cannot create the
 4. Name the service exactly `companion-api` so its address is `https://companion-api.onrender.com`. If Render gives it
    another address, update the two Vercel variables above and redeploy the site.
 5. When the first deploy is live, check `https://companion-api.onrender.com/health` and `.../agent/health`, then
-   `https://companion-monad.vercel.app/relayer/health`.
+   `https://companion-monad.vercel.app/relayer/health`. The first request after a sleep takes about a minute.
+6. **Keep it awake.** Create a free monitor at [UptimeRobot](https://uptimerobot.com) or [cron-job.org](https://cron-job.org)
+   that requests `https://companion-api.onrender.com/health` every 5 minutes. One free service has 750 hours a month, which
+   covers a whole month. Before recording or presenting, open `/relayer/health` yourself to be sure it is awake.
 
 Things that will not be obvious:
 
-- **The API service needs the disk.** It keeps family display names, push subscriptions and the traction cache. The chain
-  holds the money and the identities, so losing the disk costs no funds, but a family would have to be recreated.
+- **There is no disk on the free plan.** Display names, masked contacts, push subscriptions and invites not yet accepted live in
+  a temporary folder and are lost on every restart or redeploy. The chain holds the money, the passkeys, the envelope and the
+  notes, so no funds are lost, but a hold card may show "someone new" instead of a name, parents may need to turn alerts on again,
+  and an invite not yet accepted must be re-sent. **Do not redeploy or restart the service mid-demo, and finish onboarding a
+  family in one sitting.** A paid plan with a disk removes all of this.
 - **Do not set `THUNAI_VAULT_ADDRESS` or the other contract addresses** on Render. They are read from
   `contracts/deployments/10143.json` in the repository. To switch to the Agora vault later, set `THUNAI_DEPLOYMENT=agora`
   and `THUNAI_START_BLOCK`, nothing else.

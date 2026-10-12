@@ -7,8 +7,14 @@
 #
 # scripts/serve.mjs starts both servers and routes by path behind the single port Render gives a service.
 #
-# Use a paid plan. A free service goes to sleep after a quiet spell, and a sleeping service has no keeper, so
-# an unanswered hold would not expire and the weekly allowance would not run.
+# FREE plan. A free web service sleeps after 15 minutes without inbound traffic, and a sleeping service has no keeper,
+# so an unanswered hold would not expire and the weekly allowance would not run. Keep it awake with a free pinger that
+# requests https://companion-api.onrender.com/health every 5 minutes (UptimeRobot or cron-job.org). One free service has
+# enough monthly hours (750) to stay up all month. docs/DEPLOY.md has the steps.
+#
+# A free service has no persistent disk, so DATA_DIR is temporary and is wiped on every restart or redeploy. The chain keeps
+# the money, the passkeys, the envelope and the notes; what is lost is only display names, masked contacts, push
+# subscriptions and invites not yet accepted. Do not redeploy in the middle of a demo.
 #
 # Every value marked `sync: false` is entered in the Render dashboard (or pasted from `.render.env`, which
 # `node scripts/render-env.mjs` writes locally and git ignores). None of them are in the repository.
@@ -17,21 +23,15 @@ services:
   - type: web
     name: companion-api
     runtime: node
-    plan: starter
+    plan: free
     buildCommand: corepack enable && pnpm install --frozen-lockfile --filter @thunai/relayer... --filter @thunai/agent...
     startCommand: node scripts/serve.mjs
     healthCheckPath: /health
-    # Family display names, push subscriptions and the traction cache live in DATA_DIR. The chain is the record of
-    # money and identity, so losing the disk would not lose funds, but a family would have to be recreated.
-    disk:
-      name: companion-data
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: NODE_VERSION
         value: 22
       - key: DATA_DIR
-        value: /var/data
+        value: /tmp/companion-data
       - key: LOG_LEVEL
         value: info
       - key: TESTNET_PARTNER_STANDIN

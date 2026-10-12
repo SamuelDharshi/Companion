@@ -44,7 +44,7 @@ const required = [
 const optional = ["VAPID_SUBJECT", "ANTHROPIC_API_KEY", "CLASSIFIER_MODEL", "CLASSIFIER_EFFORT", "CLASSIFIER_TIMEOUT_MS", "ALCHEMY_RPC_URL", "CRE_TOKEN", "ORCHESTRATOR"];
 const fixed = {
   NODE_VERSION: "22",
-  DATA_DIR: "/var/data",
+  DATA_DIR: "/tmp/companion-data",
   LOG_LEVEL: "info",
   TESTNET_PARTNER_STANDIN: "true",
   KEEPER_ENABLED: "true",
