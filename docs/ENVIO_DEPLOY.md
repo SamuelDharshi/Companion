@@ -1,5 +1,9 @@
 # Deploying the indexer on Envio's hosted service
 
+**Live:** `https://indexer.dev.hyperindex.xyz/abe6264/v1/graphql` (Envio Cloud, development plan, branch `envio`). Envio Cloud builds from the `envio` branch, not `main`:
+every push to it re-indexes from the start block, and the free plan allows only 3 deployments per indexer. Move `envio` to a new
+commit only when the indexer itself changes.
+
 Envio's local tooling does not run natively on Windows, so the indexer is deployed from the hosted
 service instead. Everything it needs is already in the repo, and `pnpm check:indexer` confirms the
 config, schema and handlers agree with the compiled contracts.
@@ -51,7 +55,9 @@ config, schema and handlers agree with the compiled contracts.
 Update the three lines marked `# deployment` in `indexer/config.yaml` (vault, ScamSignals, start block), push,
 and redeploy on Envio. The start block comes from `contracts/broadcast/Deploy.s.sol/10143/run-latest.json`.
 
-## Not claimed until it is live
+## Envio 3 notes (what broke the first build)
 
-Until step 5 finishes and the app shows "Envio indexer" under Details, every document says the indexer is
-included but not deployed.
+The first hosted build failed at codegen because the config used Envio 2's `networks` key; Envio 3 calls it `chains`, imports
+handlers from `envio` with `indexer.onEvent(...)`, and leaves transaction hashes empty unless `field_selection` asks for them.
+`pnpm check:indexer` now validates the config against the schema shipped inside the pinned `envio` package, so this is caught
+before a deploy.

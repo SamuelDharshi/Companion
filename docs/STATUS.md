@@ -26,6 +26,8 @@ Raw numbers: [`e2e-testnet.json`](e2e-testnet.json).
 | Lock-down | `/fund`, the agent's webhooks and dev routes need their tokens and do not exist without them. Deposits need the guardian's own signature and are capped and replay-proof. |
 | Web push subscription | Only the family member's own key can subscribe a device to alerts. |
 | Pay a new person by name and phone | A name and a phone number become a payee with no address typed or shown; the same number typed two ways is the same person; a number without a country code is refused; the parent's hold card reads the name and a masked contact; a report follows the contact, so the next family typing it is held for the network's reason. |
+| Envio indexer (HyperIndex 3.14, Envio Cloud) | Live at `https://indexer.dev.hyperindex.xyz/abe6264/v1/graphql`, synced from block 70,125,515 to the chain head. Its families (20), holds (101) and SOS presses (17) match the contract's own counters. All five app and site queries are accepted (`pnpm check:envio`). `/traction` reads it and says "Envio HyperIndex". |
+| Traction page family count | Families are counted as real only if our relayer has a record that they signed up themselves. Our own test families, and families the relayer has no record of (its data on the free plan is wiped at each restart), are never counted as real. Before this fix the page wrongly showed 17 real families. |
 | Chainlink CRE workflow (`cre workflow simulate`, CLI 1.38.0, SDK 1.23.0) | Passes against live Monad testnet, with the agent running locally and again with the deployed agent. It read the vault (19 families, 94 holds) in two chain reads through Multicall3 (CRE allows 15 reads per run), found the open hold the test had just created, and had the agent remind the parent about it (hold 94, classified as the fake-officer scam). In the same run it returned the money on four real unanswered holds. Output saved in `docs/cre-simulation.txt`. `E2E_CRE_DEMO=1 pnpm e2e:testnet` reproduces it. |
 | Alchemy failover RPC | `pnpm check:failover` against the live Alchemy Monad testnet endpoint: with a dead primary Alchemy answers (chain 10143), with a healthy primary the primary answers, and without the fallback the dead primary fails. |
 | Alchemy webhook route (`/alchemy/webhook`) | Signature required (HMAC-SHA256 over the raw body), 503 without a key, unsigned or wrongly signed bodies refused, a hold the relayer path missed is paged once, duplicates and repeats are skipped, an already-paged SOS is skipped. `pnpm e2e` beat 12b and 5 unit tests. |
@@ -91,7 +93,7 @@ The relayer and agent use a **Quicknode** endpoint (`MONAD_RPC_URL` in `.env`, n
 | **Silent SOS, the notes card, alerts card, session prompt and "How fast" card as screens** | They render and typecheck and the backend they call is tested, but nobody has tapped through them on a phone. |
 | **The Agora swap succeeding on the real pair** | Needs the vault whitelisted as `APPROVED_SWAPPER` and real CTK in the relayer. See `docs/AGORA_REQUEST.md`. |
 | **The Agora-ready vault `0xF2BA20FaF5f171DcDB9E7F70a489855d170465C1`** | Deployed on the real tokens; passes the token and decimals checks. Not whitelisted, and the running app does not use it. |
-| **The Envio indexer** | Config, schema and handlers match the compiled ABI (`pnpm check:indexer`) and point at the real deployment, but it has never run. The app reads it first and falls back to the relayer's own event counts. |
+| **The indexer's evidence line on a hold card, on a phone** | The query is accepted by the live indexer (`pnpm check:envio`), and the app reads it first. Not yet seen on a phone. |
 | **The LLM explanation** | The Anthropic account has no credit, so every hold used the rules' own explanation. |
 | **The ERC-8004 feedback from the app** | The relayer path is verified on testnet by the e2e. The app's background call after a stop (session signs the transaction) has not run on a phone. |
 
@@ -99,7 +101,6 @@ The relayer and agent use a **Quicknode** endpoint (`MONAD_RPC_URL` in `.env`, n
 
 | Thing | Why |
 |---|---|
-| **Envio deployed** | Needs you to connect the repo on envio.dev. Steps: `docs/ENVIO_DEPLOY.md`. |
 | **Cleanverse** | Blocked: `docs.cleanverse.com` is behind an invitation code, and the three CCP PDFs are not in `docs/vendor/` yet, so nothing was built. Drop them in (and the invitation code, if the site is needed) to resume Phase 7 with a 3-hour time box; if neither is available, drop Cleanverse. |
 | **Aurora Intents** | **Skipped, by decision.** Aurora's docs list Monad as supported for source and destination but never mention a testnet, anywhere (checked the docs index and the Intents Connect, Deposits and Swap chain pages). Only a mainnet flow is documented, which would need real funds and our contracts on mainnet, so nothing was built and nothing was spent. If Aurora's team confirms testnet support, Phase 8 can be picked up with a 3-hour time box. |
 | **A keep-alive monitor for the free Render service** | The relayer and agent run on Render's free plan at `https://companion-api-27cv.onrender.com`, which sleeps after 15 minutes without requests. Until a free pinger (UptimeRobot) hits `/health` every 5 minutes, the keeper is not guaranteed to run. No disk: display names, masked contacts, push subscriptions and pending invites are lost on a restart or redeploy. |
@@ -138,4 +139,4 @@ Read from the pages in the hackathon resources list, 11 Oct 2026:
 - It protects money held in the app, not the student's bank account. Silent SOS and Check on Arjun break the isolation instead.
 - Parent alerts reach her by WhatsApp link and by opening the app. Browser push is built but not proven on a device.
 - The AI explanation is optional. Fixed rules decide every hold, and a model can never move or release money.
-- Envio is not deployed. The Alchemy webhook has not received a real delivery yet. Cleanverse and Aurora are not built.
+- The Envio indexer is on Envio Cloud's free development plan. The Alchemy webhook has not received a real delivery yet. Cleanverse and Aurora are not built.

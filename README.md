@@ -9,7 +9,7 @@
 
 Built for **Monad Metropolis** · **Track: Consumer Products & Payments** · Monad Testnet (10143)
 
-**Bounties:** Agora Cross-Border Payments · Mera "Best Mera-Powered UX" · Mera "One Passkey, Many Keys" · Best Community Team. Chainlink CRE is built and simulated; Alchemy's failover is verified and its alert webhook is built; Envio is in progress. Each is described with its exact status in [`docs/SUBMISSION.md`](docs/SUBMISSION.md).
+**Bounties:** Agora Cross-Border Payments · Mera "Best Mera-Powered UX" · Mera "One Passkey, Many Keys" · Best Community Team. Chainlink CRE is built and simulated; the Envio indexer is live; Alchemy's failover is verified and its alert webhook is built. Each is described with its exact status in [`docs/SUBMISSION.md`](docs/SUBMISSION.md).
 
 **Live:** https://companion-monad.vercel.app (the app is at `/app`). Testnet only.
 
@@ -667,7 +667,7 @@ The app reads the contract and the relayer directly. There is no indexer in the 
 | [`relayer/`](relayer) | Gas sponsorship, `eth_sendRawTransactionSync`, intent API |
 | [`agent/`](agent) | Allowance runner, keeper, classifier, pager |
 | [`cre/`](cre) | A Chainlink CRE workflow that reads the vault on Monad testnet and drives the allowance and the unanswered holds through the agent. `cre workflow simulate` passes against the live chain; output in [`docs/cre-simulation.txt`](docs/cre-simulation.txt). Not deployed to the CRE network. |
-| [`indexer/`](indexer) | An Envio indexer (config, schema, handlers). **Included but not deployed.** |
+| [`indexer/`](indexer) | The Envio HyperIndex 3 indexer (config, schema with derived entities, handlers). **Live on Envio Cloud**; `/traction` and the app read it. |
 | [`app/`](app) | Expo app — both roles, every screen |
 | [`frontend/`](frontend) | The landing page (Next.js). Its numbers come from a recorded run on testnet. |
 | [`packages/shared`](packages/shared) | Chain config, ABIs, action hashes, merkle trees, copy-safe money formatting |
@@ -825,8 +825,7 @@ word on their screens.
 
 [Alchemy](docs/SUBMISSION.md#alchemy): a failover RPC (verified) and a webhook that pages the parent from the chain itself (built and tested; awaiting a real delivery).
 
-In progress, and only claimed once working: [Envio](docs/SUBMISSION.md#envio) (the indexer is included in `/indexer` but is not
-deployed; see [`docs/ENVIO_DEPLOY.md`](docs/ENVIO_DEPLOY.md)).
+[Envio](docs/SUBMISSION.md#envio): the indexer is live on Envio Cloud, and the traction page and the app read it.
 
 Not entered: Dynamic and Privy (they would replace Mera as the account layer), Cleanverse, Nansen, Aurora, Kuru, Perpl, Agora
 Trading, MetaMask and Hunyuan. [`docs/STATUS.md`](docs/STATUS.md) lists exactly what is verified, unverified and not done.
@@ -857,8 +856,8 @@ Stated here rather than discovered by a judge.
   to the Home Screen.
 - **The AI explanation is optional.** Fixed rules decide every hold. A language model can write the
   explanation when an API key with credit is set, and it can never move money.
-- **No indexer.** The Envio indexer is included but not deployed. The app's counters come from our relayer, which
-  counts the contracts' own events, and the screens say so.
+- **The indexer is on Envio Cloud's free development plan.** If it is gone, the counters fall back to our relayer's own count, and
+  the screens say which source they used.
 - **PRF notes key on a real phone is unverified.** The notes are encrypted and stored onchain and the round trip is
   tested, but with a stand-in for the authenticator's PRF output.
 - **Nothing on the landing page is invented.** Every figure is from a recorded run with a transaction

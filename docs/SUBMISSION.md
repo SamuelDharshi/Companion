@@ -10,7 +10,7 @@
 | 2 | [Mera, Best Mera-Powered UX](#mera-ux) | Entered. |
 | 3 | [Mera, One Passkey, Many Keys](#mera-many-keys) | Entered. |
 | 4 | [Best Community Team](#best-community-team) | Entered. Group: **[YOUR CAMPUS GROUP, picked on the hackathon profile]** |
-| 5 | [Envio, Best Use of Envio](#envio) | Enter only once the indexer is deployed. **Not deployed yet.** |
+| 5 | [Envio, Best Use of Envio](#envio) | Entered. HyperIndex 3 deployed on Envio Cloud, synced to the chain head, and read by `/traction` and the app. |
 | 6 | [Chainlink, Best workflow with CRE](#chainlink-cre) | Entered. `cre workflow simulate` passes against the live chain. Not deployed to the CRE network. |
 | 7 | [Alchemy, Best Projects using Alchemy](#alchemy) | Entered. Failover RPC verified; the alert webhook is built and tested, awaiting a real delivery. |
 
@@ -280,22 +280,40 @@ watching, and cannot be made to start it again. Tests: `test_DuressKeyFreezesOut
 
 ## Envio
 
-**Status: enter only once the indexer is deployed. It is not deployed yet.**
+**Status: deployed and live.** Envio HyperIndex 3.14 on Envio Cloud, indexing Monad testnet (chain 10143) from the block the vault
+was created in (70,125,515) and following the chain head. GraphQL endpoint: `https://indexer.dev.hyperindex.xyz/abe6264/v1/graphql`.
 
-The indexer (config, schema with derived entities, handlers) is in [`/indexer`](../indexer) and points at our real deployment,
-including the `SOSRaised` and `NotesStored` events. `pnpm check:indexer` validates every event signature against the compiled
-ABI. The hosted-service steps are in [`docs/ENVIO_DEPLOY.md`](ENVIO_DEPLOY.md).
+Asked for: *how your project meaningfully uses Envio's HyperIndex, HyperSync or HyperRPC to power real on-chain data.*
 
-When it is deployed, the answer to *how your project meaningfully uses Envio* is:
+**What it indexes.** All 16 events of `ThunaiVault` and `ScamSignals` (families, envelopes, deposits, allowance payouts, holds and
+how they ended, withdrawals, checks on the student, freezes, Silent SOS, encrypted-notes versions, and network reports) into eight
+entities. `Family` carries **derived** lists of its holds, payouts, checks, withdrawals and SOS presses, so one query returns a
+family's whole history. `NetworkStats` is an **aggregate** kept up to date by the handlers: families, holds opened, payments a parent
+stopped, holds that expired, money protected, allowances delivered, checks answered, reports filed, SOS presses, and the **median and
+fastest time from a hold opening to a parent stopping it**, recomputed as each stop arrives. `Signal` holds each reported payee's
+count, which is what raises the hold level for the next family.
 
-- HyperIndex indexes every vault and ScamSignals event on Monad testnet (network 10143) into entities: families, holds,
-  allowance runs, checks, SOS events, reports, and **derived** daily and network-wide aggregates (holds opened, scams stopped,
-  money protected, median time to stop).
-- The `/traction` counters and the **network evidence on a hold card** ("another family reported this number") read from the
-  Envio GraphQL endpoint. If it is unreachable, they fall back to the relayer's own event count and the screen says which
-  source is active.
+**What it powers.**
+- **`/traction`** on the live site reads its counters from Envio and says "Envio HyperIndex". If Envio does not answer, the page
+  falls back to the relayer's own count of the same events and says that instead.
+- **The app** reads the network numbers ("Families protected") and the **evidence on a hold card** ("N families reported this
+  payee") from Envio first, with the same labelled fallback. The decision on a hold is never read from the indexer: it is always read
+  from the contract, so an indexer delay cannot show a family a stale "safe".
 
-None of this is claimed until the endpoint is live and the app reads from it.
+**Why it matters here, measured.** On the free hosting plan our relayer's own counter restarts from scratch after every redeploy and
+was 77,000 blocks behind the chain when we checked. Envio was at the chain head and counted 25 payments stopped by a parent where the
+relayer had counted 19 so far. Its totals for families (20), holds (101) and SOS presses (17) match the contract's own counters
+exactly.
+
+**Checked.**
+- `pnpm check:indexer` validates `config.yaml` against the JSON schema inside the pinned `envio` package, and every event signature
+  against the compiled ABI. It catches the v2-style config that failed our first Envio build.
+- `ENVIO_GRAPHQL_URL=https://indexer.dev.hyperindex.xyz/abe6264/v1/graphql pnpm check:envio` sends every query the app and site use to the live indexer: all five are accepted.
+- `/traction` was checked live: it reads "Envio HyperIndex", and against a stand-in server it falls back and says so.
+
+**Not yet seen:** the hold card's evidence line on a physical phone.
+
+**Video (2 min):** [`docs/DEMO.md`](DEMO.md#envio-video).
 
 ---
 
@@ -427,7 +445,7 @@ tunnel for a local run, are in [`docs/DEMO.md`](DEMO.md).
   agent's send) but no real browser has received one yet; on iPhone the app must be added to the Home Screen.
 - **The AI explanation is optional and was not used.** Our Anthropic account has no credit, so every hold used the rules' own
   explanation.
-- **Envio is not deployed.** The app reads the relayer's own event counts and says so.
+- **The Envio indexer runs on Envio Cloud's free development plan.** If the deployment is ever unavailable, the site falls back to the relayer's own count and says so.
 - **The CRE workflow is not deployed to the CRE network** (that needs Early Access), and CRE does not write onchain in our design (see the Chainlink section).
 - **The Alchemy webhook has not yet received a real delivery.** The failover is verified.
 - **Cleanverse and Aurora are not built.**
