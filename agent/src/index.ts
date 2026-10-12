@@ -16,6 +16,7 @@ import {
 import { loadEnv } from "./env";
 import { Classifier } from "./classifier";
 import { Keeper } from "./keeper";
+import { HOLD_OPENED_TOPIC, SOS_RAISED_TOPIC, extractLogs, signatureMatches, topicToId } from "./alchemy";
 import { Pager, type PushTarget } from "./pager";
 
 /**
@@ -37,7 +38,7 @@ await app.register(cors, {
 });
 
 const chain = await createChain(
-  { rpcUrl: env.MONAD_RPC_URL, privateKey: env.AGENT_PRIVATE_KEY },
+  { rpcUrl: env.MONAD_RPC_URL, fallbackRpcUrl: env.ALCHEMY_RPC_URL, privateKey: env.AGENT_PRIVATE_KEY },
   app.log,
 );
 const deployment = loadDeployment(
@@ -379,6 +380,120 @@ app.post("/sos-detail", async (request) => {
   const guardians = (subs?.subscriptions ?? []).filter((s) => s.role === "guardian");
   const pagedDevices = guardians.length > 0 ? await pager.page(guardians, alert) : 0;
   return { ok: true, pagedDevices };
+});
+
+/**
+ * An Alchemy webhook, watching Monad testnet for the vault's `HoldOpened` and `SOSRaised` events. This is a second path to
+ * the parent that does not depend on our own relayer, so she is still paged if the relayer's call to us never arrived.
+ *
+ * Only a body signed with ALCHEMY_WEBHOOK_SIGNING_KEY is accepted, and the route does not answer at all (503) without
+ * that key. It never trusts the webhook for anything that matters: it re-reads the hold from the chain before paging, and
+ * skips anything the relayer path already paged, so a parent is not paged twice for one event.
+ */
+const alchemySeen = new Set<string>();
+await app.register(async (scope) => {
+  // The signature covers the exact bytes Alchemy sent, so this route needs the raw body, not parsed JSON.
+  scope.addContentTypeParser("application/json", { parseAs: "string" }, (_request, body, done) => done(null, body));
+
+  scope.post("/alchemy/webhook", async (request, reply) => {
+    if (!env.ALCHEMY_WEBHOOK_SIGNING_KEY) return reply.code(503).send({ error: "Webhook not configured." });
+    const raw = typeof request.body === "string" ? request.body : "";
+    if (!signatureMatches(raw, request.headers["x-alchemy-signature"], env.ALCHEMY_WEBHOOK_SIGNING_KEY)) {
+      return reply.code(401).send({ error: "Bad signature." });
+    }
+    let payload: unknown;
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      return reply.code(400).send({ error: "Not JSON." });
+    }
+
+    let paged = 0;
+    let skipped = 0;
+    for (const log of extractLogs(payload)) {
+      const id = `${log.txHash ?? ""}:${log.logIndex ?? log.topics.join(",")}`;
+      if (alchemySeen.has(id)) {
+        skipped++;
+        continue;
+      }
+      alchemySeen.add(id);
+      if (alchemySeen.size > 2000) alchemySeen.delete(alchemySeen.values().next().value as string);
+
+      const topic0 = log.topics[0];
+      if (topic0 === HOLD_OPENED_TOPIC.toLowerCase()) {
+        const holdId = topicToId(log.topics[1]);
+        const familyId = topicToId(log.topics[2]);
+        if (!holdId || !familyId || briefs.has(holdId)) {
+          skipped++;
+          continue;
+        }
+        const hold = await vault.readHold(BigInt(holdId)).catch(() => null);
+        if (!hold || hold.status !== HOLD_STATUS.OPEN) {
+          skipped++;
+          continue;
+        }
+        const names = await relayer<FamilyNames>(`/family/${familyId}`);
+        const studentName = names?.studentName ?? "Your child";
+        const classification = await classifier.classify({
+          memo: "",
+          amountUsd: toDollars(hold.amount),
+          amountVsUsual: 1,
+          payeeIsNew: hold.reason === HOLD_REASON.NEW_PAYEE || hold.reason === HOLD_REASON.NETWORK_FLAG,
+          localHour: new Date().getUTCHours(),
+          networkFlagCount: hold.reason === HOLD_REASON.NETWORK_FLAG ? 1 : 0,
+        });
+        const alert = pager.buildAlert({
+          familyId,
+          holdId,
+          amount: hold.amount,
+          reason: hold.reason,
+          classification,
+          studentName,
+        });
+        const subs = await relayer<{ subscriptions: PushTarget[] }>(`/subscriptions/${familyId}`);
+        const guardians = (subs?.subscriptions ?? []).filter((t) => t.role === "guardian");
+        const pagedDevices = guardians.length > 0 ? await pager.page(guardians, alert) : 0;
+        briefs.set(holdId, {
+          holdId,
+          familyId,
+          amount: hold.amount,
+          memo: "",
+          reason: hold.reason,
+          classification,
+          classifierSource: classification.source,
+          openedAt: Date.now(),
+          pagedDevices,
+          whatsAppLink: pager.whatsAppLink(alert),
+          alert,
+        });
+        app.log.warn({ holdId, familyId, pagedDevices }, "alchemy webhook: a hold the relayer path had not reported");
+        paged++;
+      } else if (topic0 === SOS_RAISED_TOPIC.toLowerCase()) {
+        const familyId = topicToId(log.topics[1]);
+        if (!familyId) {
+          skipped++;
+          continue;
+        }
+        const names = await relayer<FamilyNames & { sos?: { at: number } }>(`/family/${familyId}`);
+        // The relayer already recorded and paged this SOS (it keeps the private call room): nothing more to do.
+        if (names?.sos && Date.now() - names.sos.at < 10 * 60 * 1000) {
+          skipped++;
+          continue;
+        }
+        const studentName = names?.studentName ?? "Your child";
+        const time = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+        const alert = sosAlert(familyId, studentName, time);
+        const subs = await relayer<{ subscriptions: PushTarget[] }>(`/subscriptions/${familyId}`);
+        const guardians = (subs?.subscriptions ?? []).filter((t) => t.role === "guardian");
+        const pagedDevices = guardians.length > 0 ? await pager.page(guardians, alert) : 0;
+        app.log.warn({ familyId, pagedDevices }, "alchemy webhook: an SOS the relayer path had not reported");
+        paged++;
+      } else {
+        skipped++;
+      }
+    }
+    return { ok: true, paged, skipped };
+  });
 });
 
 app.post("/liveness-proved", async (request) => {

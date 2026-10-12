@@ -23,6 +23,14 @@ const schema = z.object({
     .string()
     .regex(/^0x[0-9a-fA-F]{64}$/, "AGENT_PRIVATE_KEY must be a 0x-prefixed 32-byte hex key"),
 
+  /** Alchemy's Monad testnet RPC, used as a failover when MONAD_RPC_URL errors. A secret: .env only. */
+  ALCHEMY_RPC_URL: z.preprocess((v) => (v === "" ? undefined : v), z.string().url().optional()),
+  /**
+   * The signing key Alchemy gives a webhook. /alchemy/webhook answers only a body signed with it, and does not
+   * answer at all (503) when this is unset.
+   */
+  ALCHEMY_WEBHOOK_SIGNING_KEY: z.preprocess((v) => (v === "" ? undefined : v), z.string().min(16).optional()),
+
   THUNAI_VAULT_ADDRESS: z.string().optional(),
   SCAM_SIGNALS_ADDRESS: z.string().optional(),
 

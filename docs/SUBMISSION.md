@@ -12,7 +12,7 @@
 | 4 | [Best Community Team](#best-community-team) | Entered. Group: **[YOUR CAMPUS GROUP, picked on the hackathon profile]** |
 | 5 | [Envio, Best Use of Envio](#envio) | Enter only once the indexer is deployed. **Not deployed yet.** |
 | 6 | [Chainlink, Best workflow with CRE](#chainlink-cre) | Entered. `cre workflow simulate` passes against the live chain. Not deployed to the CRE network. |
-| 7 | [Alchemy, Best Projects using Alchemy](#alchemy) | Supported on Monad testnet. **Not integrated yet** (needs an Alchemy key). |
+| 7 | [Alchemy, Best Projects using Alchemy](#alchemy) | Entered. Failover RPC verified; the alert webhook is built and tested, awaiting a real delivery. |
 
 Not entered: Dynamic and Privy (they would replace Mera as the account layer), Cleanverse (a Trust-track bounty), Nansen
 (no data for testnet addresses), Aurora (needs mainnet funds), Kuru, Perpl, Agora Trading and MetaMask (trading
@@ -337,8 +337,24 @@ unexpired. Tested in `pnpm e2e` (beat 11c).
 
 ## Alchemy
 
-**Status: Monad testnet is supported by Alchemy (RPC, websockets and webhooks). Not integrated yet**: it needs an Alchemy
-key. The relayer already reads an optional `ALCHEMY_RPC_URL` for its event-log reads; nothing else is claimed.
+Asked for: *how your project meaningfully integrates one or more of Alchemy's services or tools.*
+
+Alchemy supports Monad testnet for RPC, websockets and webhooks. We use two of those, each doing a job that matters in a rescue.
+The setup guide is [`docs/ALCHEMY.md`](ALCHEMY.md).
+
+| Service | What it does for Companion | Status |
+|---|---|---|
+| **Monad testnet RPC, as a failover** | The relayer and agent send each request to the primary RPC first. If it errors, the same request is retried on Alchemy, including `eth_sendRawTransactionSync`, so one provider's outage cannot stop a rescue. | **Verified** against the live endpoint: `pnpm check:failover` shows Alchemy answering with the primary down, the primary answering when healthy, and failing without the fallback (so the first check really used Alchemy). |
+| **Webhooks** (custom, GraphQL) | A webhook watches the vault for `HoldOpened` and `SOSRaised` and calls the agent at `/alchemy/webhook`. The parent is paged even if our own relayer's call to the agent never arrived. | Route **built and tested** with signed payloads (`pnpm e2e` beat 12b and unit tests). **Not yet verified with a real Alchemy delivery**, which needs the webhook created in the dashboard and its signing key set. |
+
+**Safe by construction.** The webhook route answers only a body signed with the webhook's key (HMAC-SHA256 over the exact bytes), and
+not at all without the key. It never trusts the payload for anything that matters: it re-reads the hold from the chain before paging,
+and skips anything the relayer path already paged, so a parent is never paged twice for one event.
+
+**Why not for event counting.** Alchemy's free tier allows 10 blocks per `eth_getLogs` request, which is too small to backfill the
+traction counters, so those keep using the public RPC.
+
+**Video (2 min):** [`docs/DEMO.md`](DEMO.md#alchemy-video).
 
 ---
 
@@ -413,6 +429,6 @@ tunnel for a local run, are in [`docs/DEMO.md`](DEMO.md).
   explanation.
 - **Envio is not deployed.** The app reads the relayer's own event counts and says so.
 - **The CRE workflow is not deployed to the CRE network** (that needs Early Access), and CRE does not write onchain in our design (see the Chainlink section).
-- **Alchemy is not integrated.**
+- **The Alchemy webhook has not yet received a real delivery.** The failover is verified.
 - **Cleanverse and Aurora are not built.**
 - **The English-only app** has no Tamil UI.

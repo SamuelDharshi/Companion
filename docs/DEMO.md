@@ -111,6 +111,16 @@ submission: included, not deployed.
 3. **1:00** In the app, send a payment that opens a hold. The `/traction` counters move, and a hold card shows another family's report, both read from Envio.
 4. **1:40** Stop the endpoint (or point the app at a bad URL): the screens fall back to the relayer's count and name the source.
 
+### Alchemy video
+
+Record the failover for certain; record the webhook only once it has paged a real hold.
+
+1. **0:00** `docs/ALCHEMY.md`: two uses, failover RPC and chain-driven alerts, and the one place Alchemy is *not* used (log counting, because of the free tier's 10-block limit).
+2. **0:25** Run `pnpm check:failover`: with the primary RPC dead, Alchemy answers on chain 10143; with it healthy, the primary answers.
+3. **0:55** Alchemy dashboard, Webhooks: the custom webhook on Monad testnet filtering the vault's `HoldOpened` and `SOSRaised`.
+4. **1:15** In the app, send a payment to a new person. Show the agent log line "alchemy webhook" (or, if the relayer path got there first, that the webhook was correctly skipped, so the parent is not paged twice).
+5. **1:45** Say the safety rule: the route accepts only a signed body, re-reads the hold from the chain before paging, and can never move money.
+
 ### Chainlink video
 
 Record only after `cre workflow simulate` has passed. Say plainly what CRE does and does not do ([`cre/README.md`](../cre/README.md)).

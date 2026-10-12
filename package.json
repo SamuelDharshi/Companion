@@ -26,7 +26,8 @@
     "tunnel": "node scripts/tunnel-proxy.mjs",
     "check:indexer": "node scripts/check-indexer.mjs",
     "verify": "pnpm contracts:test && pnpm parity && pnpm check:indexer && pnpm typecheck && pnpm e2e",
-    "typecheck": "pnpm -r --filter=!@thunai/indexer typecheck"
+    "typecheck": "pnpm -r --filter=!@thunai/indexer typecheck",
+    "check:failover": "tsx scripts/check-failover.mjs"
   },
   "devDependencies": {
     "viem": "^2.55.10",

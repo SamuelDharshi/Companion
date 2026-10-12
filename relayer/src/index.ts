@@ -54,7 +54,7 @@ await app.register(cors, {
 });
 
 const chain = await createChain(
-  { rpcUrl: env.MONAD_RPC_URL, privateKey: env.RELAYER_PRIVATE_KEY },
+  { rpcUrl: env.MONAD_RPC_URL, fallbackRpcUrl: env.ALCHEMY_RPC_URL, privateKey: env.RELAYER_PRIVATE_KEY },
   app.log,
 );
 // Read the deployment for whichever chain the RPC actually is.
@@ -77,8 +77,7 @@ if (env.THUNAI_START_BLOCK === 0) {
 }
 // Event counting reads logs in 100-block steps. If the main RPC refuses a range that wide, LOGS_RPC_URL points
 // it at one that does, so the rest of the relayer can keep using the faster provider.
-const logsRpc = env.LOGS_RPC_URL ?? env.ALCHEMY_RPC_URL;
-const logsClient = logsRpc ? createPublicClient({ transport: http(logsRpc) }) : chain.publicClient;
+const logsClient = env.LOGS_RPC_URL ? createPublicClient({ transport: http(env.LOGS_RPC_URL) }) : chain.publicClient;
 const tally = new TallyFollower(
   logsClient as typeof chain.publicClient,
   deployment.thunaiVault as Address,

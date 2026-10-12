@@ -16,7 +16,7 @@
  * Run: pnpm e2e
  */
 import { spawn, spawnSync } from "node:child_process";
-import { createHash } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -33,6 +33,7 @@ import {
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { foundry } from "viem/chains";
 import { createPasskey, signAssertion } from "./lib/passkey.mjs";
+import { HOLD_OPENED_TOPIC, SOS_RAISED_TOPIC } from "../agent/src/alchemy.ts";
 import {
   envelopeChallenge,
   livenessChallenge,
@@ -74,6 +75,7 @@ const AGENT_URL = TESTNET ? process.env.E2E_AGENT_URL || "http://127.0.0.1:8788"
 const E2E_ADMIN = TESTNET ? dotenv.DEV_ADMIN_TOKEN : "e2e-admin-token-0123456789abcdef";
 const E2E_INTERNAL = TESTNET ? dotenv.INTERNAL_TOKEN : "e2e-internal-token-0123456789abcdef";
 const E2E_CRE = TESTNET ? dotenv.CRE_TOKEN : "e2e-cre-token-0123456789abcdef0123";
+const E2E_ALCHEMY = TESTNET ? dotenv.ALCHEMY_WEBHOOK_SIGNING_KEY : "e2e-alchemy-signing-key-0123456789";
 if (TESTNET && (!E2E_ADMIN || !E2E_INTERNAL)) {
   console.error("A testnet run needs DEV_ADMIN_TOKEN and INTERNAL_TOKEN in .env (and the same ones in the running services).");
   process.exit(1);
@@ -318,6 +320,7 @@ try {
         DEV_ADMIN_TOKEN: E2E_ADMIN,
         INTERNAL_TOKEN: E2E_INTERNAL,
         CRE_TOKEN: E2E_CRE,
+        ALCHEMY_WEBHOOK_SIGNING_KEY: E2E_ALCHEMY,
         ORCHESTRATOR: "cre",
         LOG_LEVEL: "warn",
       },
@@ -761,6 +764,51 @@ try {
   });
   family = await api(`/family/${familyId}`);
   assert(family.frozen === false, "Kavya lifted the pause with her own Face ID");
+
+  // ---- An Alchemy webhook is a second, chain-driven path to the parent.
+  log("12b/15", "Alchemy webhook: a hold the relayer path missed still reaches the parent, exactly once");
+  if (!E2E_ALCHEMY) {
+    ok("(ALCHEMY_WEBHOOK_SIGNING_KEY is not set in .env, so the webhook route was not exercised)");
+  } else {
+    const hex32 = (n) => `0x${BigInt(n).toString(16).padStart(64, "0")}`;
+    const webhook = (log, key = E2E_ALCHEMY, signed = true) => {
+      const body = JSON.stringify({ webhookId: "wh_e2e", type: "GRAPHQL", event: { data: { block: { logs: [log] } }, network: "MONAD_TESTNET" } });
+      const headers = { "content-type": "application/json" };
+      if (signed) headers["x-alchemy-signature"] = createHmac("sha256", key).update(body).digest("hex");
+      return fetch(`${AGENT_URL}/alchemy/webhook`, { method: "POST", headers, body });
+    };
+    const holdLog = (tx) => ({
+      topics: [HOLD_OPENED_TOPIC, hex32(raviFlagged.holdId), hex32(familyId)],
+      data: "0x",
+      transaction: { hash: tx },
+    });
+
+    assert((await webhook(holdLog("0xe2e0"), E2E_ALCHEMY, false)).status === 401, "an unsigned webhook is refused");
+    assert((await webhook(holdLog("0xe2e0"), "some-other-signing-key-0123456789")).status === 401, "a webhook signed with another key is refused");
+
+    // The relayer already told the agent about this hold, so the webhook has nothing to add.
+    const duplicate = await (await webhook(holdLog("0xe2e1"))).json();
+    assert(duplicate.paged === 0 && duplicate.skipped === 1, "a hold the relayer path already reported is not paged again");
+
+    // Forget the agent's briefing, as if the relayer's call to it had never arrived.
+    await fetch(`${AGENT_URL}/hold-resolved`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-internal-token": E2E_INTERNAL },
+      body: JSON.stringify({ holdId: String(raviFlagged.holdId), released: false }),
+    });
+    assert((await fetch(`${AGENT_URL}/brief/${raviFlagged.holdId}`)).status === 404, "the agent has no briefing for the hold");
+    const missed = await (await webhook(holdLog("0xe2e2"))).json();
+    assert(missed.paged === 1, "the webhook reaches the parent for a hold the relayer path missed");
+    const rebuilt = await (await fetch(`${AGENT_URL}/brief/${raviFlagged.holdId}`)).json();
+    assert(rebuilt.holdId === String(raviFlagged.holdId) && rebuilt.alert?.url?.includes(`/hold/${raviFlagged.holdId}`), "the parent's alert links straight to the hold");
+
+    assert((await (await webhook(holdLog("0xe2e2"))).json()).skipped === 1, "the same delivery twice pages once");
+    assert((await (await webhook(holdLog("0xe2e3"))).json()).paged === 0, "a second event for the same hold does not page again");
+
+    // The SOS beat just ran, so the relayer path already paged it.
+    const sosAgain = await (await webhook({ topics: [SOS_RAISED_TOPIC, hex32(familyId)], data: "0x", transaction: { hash: "0xe2e4" } })).json();
+    assert(sosAgain.paged === 0 && sosAgain.skipped === 1, "an SOS the relayer path already paged is not paged again");
+  }
 
   log("13/15", "Stateless: clear storage, then one Face ID brings back the family and the encrypted notes");
   // The notes key is the passkey's PRF output for the fixed salt keccak256("thunai/notes"). A real

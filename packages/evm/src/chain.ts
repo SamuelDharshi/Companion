@@ -2,6 +2,7 @@ import {
   createPublicClient,
   createWalletClient,
   defineChain,
+  fallback,
   http,
   type Address,
   type Hex,
@@ -42,6 +43,11 @@ export type Chain = {
 /** Minimum config a service needs to put a transaction on chain. */
 export type ChainConfig = {
   rpcUrl: string;
+  /**
+   * A second RPC (Alchemy's Monad testnet endpoint). Every request goes to `rpcUrl` first, and if that errors, the
+   * same request is retried on this one, so one provider's outage cannot stop a rescue. Optional.
+   */
+  fallbackRpcUrl?: string;
   /** Pays gas. Holds no spending power: the contract enforces that. */
   privateKey: string;
 };
@@ -53,7 +59,9 @@ export type ChainLogger = {
 };
 
 export async function createChain(config: ChainConfig, log: ChainLogger): Promise<Chain> {
-  const transport = http(config.rpcUrl);
+  const transport = config.fallbackRpcUrl
+    ? fallback([http(config.rpcUrl), http(config.fallbackRpcUrl)], { rank: false, retryCount: 1 })
+    : http(config.rpcUrl);
   const account = privateKeyToAccount(config.privateKey as Hex, { nonceManager });
 
   // Ask the node which chain it is rather than assuming Monad, so the same relayer runs

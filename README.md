@@ -9,7 +9,7 @@
 
 Built for **Monad Metropolis** · **Track: Consumer Products & Payments** · Monad Testnet (10143)
 
-**Bounties:** Agora Cross-Border Payments · Mera "Best Mera-Powered UX" · Mera "One Passkey, Many Keys" · Best Community Team. Chainlink CRE is built and simulated; Envio and Alchemy are in progress. Each is described with its exact status in [`docs/SUBMISSION.md`](docs/SUBMISSION.md).
+**Bounties:** Agora Cross-Border Payments · Mera "Best Mera-Powered UX" · Mera "One Passkey, Many Keys" · Best Community Team. Chainlink CRE is built and simulated; Alchemy's failover is verified and its alert webhook is built; Envio is in progress. Each is described with its exact status in [`docs/SUBMISSION.md`](docs/SUBMISSION.md).
 
 **Live:** https://companion-monad.vercel.app (the app is at `/app`). Testnet only.
 
@@ -823,8 +823,10 @@ word on their screens.
 
 [Chainlink CRE](docs/SUBMISSION.md#chainlink-cre): the workflow simulates successfully against the live chain and the deployed agent.
 
+[Alchemy](docs/SUBMISSION.md#alchemy): a failover RPC (verified) and a webhook that pages the parent from the chain itself (built and tested; awaiting a real delivery).
+
 In progress, and only claimed once working: [Envio](docs/SUBMISSION.md#envio) (the indexer is included in `/indexer` but is not
-deployed; see [`docs/ENVIO_DEPLOY.md`](docs/ENVIO_DEPLOY.md)) and [Alchemy](docs/SUBMISSION.md#alchemy) (not integrated yet).
+deployed; see [`docs/ENVIO_DEPLOY.md`](docs/ENVIO_DEPLOY.md)).
 
 Not entered: Dynamic and Privy (they would replace Mera as the account layer), Cleanverse, Nansen, Aurora, Kuru, Perpl, Agora
 Trading, MetaMask and Hunyuan. [`docs/STATUS.md`](docs/STATUS.md) lists exactly what is verified, unverified and not done.

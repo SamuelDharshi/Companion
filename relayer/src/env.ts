@@ -62,8 +62,9 @@ const schema = z.object({
    */
   LOGS_RPC_URL: z.preprocess((v) => (v === "" ? undefined : v), z.string().url().optional()),
   /**
-   * An Alchemy Monad testnet RPC (https://monad-testnet.g.alchemy.com/v2/<key>). When set, and LOGS_RPC_URL is blank, event
-   * counting reads its logs from Alchemy instead of the public testnet RPC. The key is a secret: keep it in .env only.
+   * An Alchemy Monad testnet RPC (https://monad-testnet.g.alchemy.com/v2/<key>), used as a failover: a request that errors on
+   * MONAD_RPC_URL is retried here. Not used for event-log counting, because Alchemy's free tier allows only 10 blocks per
+   * getLogs request. The key is a secret: keep it in .env only.
    */
   ALCHEMY_RPC_URL: z.preprocess((v) => (v === "" ? undefined : v), z.string().url().optional()),
   /** The block the vault was created in, where event counting starts. Blank starts a few hundred blocks back. */
