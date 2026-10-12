@@ -153,8 +153,7 @@ from our build machine, so check one in a browser.
 
 `pnpm e2e:testnet` plays the whole scene against the live relayer and agent with fresh random keys. Latest run (12 Oct 2026):
 **102 checks passed**, 23 confirmed transactions, **median 0.53 s** (fastest 0.30 s, slowest 0.92 s). Raw numbers:
-[`docs/e2e-testnet.json`](e2e-testnet.json). The landing page lists every transaction of a recorded run with a link, and
-`/traction` counts the contracts' own events live. 95 Foundry tests pass (`pnpm contracts:test`), including a fork test
+[`docs/e2e-testnet.json`](e2e-testnet.json). `/traction` lists the latest transactions with explorer links and counts the contracts' own events live. 95 Foundry tests pass (`pnpm contracts:test`), including a fork test
 against the real Agora pair. `pnpm parity` proves TypeScript and Solidity agree on every hash.
 
 ---
@@ -417,8 +416,8 @@ The group is selected on our hackathon profile. Nothing else in this repository 
 
 ## Judge instructions
 
-**Fastest look, no passkeys needed:** open https://companion-monad.vercel.app. Its phone screens, numbers and the "Verify it
-yourself" table come from a recorded run of a fictional family on testnet, and `/traction` shows live counts. This is the
+**Fastest look, no passkeys needed:** open https://companion-monad.vercel.app. Its phone screens come from a recorded run of a
+fictional family on testnet, and `/traction` shows live counts and the latest transactions with explorer links. This is the
 read-only view.
 
 **The full two-device flow (about two minutes).** Open https://companion-monad.vercel.app/app on two devices, or in two browser

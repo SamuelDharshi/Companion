@@ -50,7 +50,7 @@ If these pass, the product works. The phones are only there to make it visible.
 | 1:40 | **Silent SOS** | Arjun taps **Someone is asking me for money**. His money pauses, Kavya's screen shows the SOS with **Video call Arjun now**. Line: *"It works for gift cards and Zelle too, because it breaks the isolation."* |
 | 2:05 | Check on Arjun | Play a cloned voice: "Kavya, I've been arrested." She taps **Check on Arjun**, and the screen says "Don't send money to anyone until this shows a signature." His phone answers. Line: *"A voice can be cloned. A passkey can't."* |
 | 2:25 | Stateless | Details, **Forget this device**, one Face ID, everything is back, including the private notes. |
-| 2:40 | Close | The landing page's **Verify it yourself** table: real transactions with links. Then `/traction`. *"Companion: family is your second key."* |
+| 2:40 | Close | `/traction`: live counts and real transactions with explorer links. *"Companion: family is your second key."* |
 
 ### Lines to say exactly
 

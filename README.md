@@ -624,7 +624,7 @@ The rescue has to finish **while the scammer is still on the line.**
                      0       0.5      1.0      1.5 s
 ```
 
-**Measured on live Monad testnet** (`pnpm e2e:testnet`, 23 confirmed transactions): median **0.53 s**, fastest 0.30 s, slowest 0.92 s, run through the deployed site and relayer. Raw numbers are in [`docs/e2e-testnet.json`](docs/e2e-testnet.json), and the landing page lists every transaction of a recorded run with a link. No other latency figure is quoted anywhere.
+**Measured on live Monad testnet** (`pnpm e2e:testnet`, 23 confirmed transactions): median **0.53 s**, fastest 0.30 s, slowest 0.92 s, run through the deployed site and relayer. Raw numbers are in [`docs/e2e-testnet.json`](docs/e2e-testnet.json), and the traction page lists the latest transactions with explorer links. No other latency figure is quoted anywhere.
 
 ---
 
