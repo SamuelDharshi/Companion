@@ -28,7 +28,8 @@
     "verify": "pnpm contracts:test && pnpm parity && pnpm check:indexer && pnpm typecheck && pnpm e2e",
     "typecheck": "pnpm -r --filter=!@thunai/indexer typecheck",
     "check:failover": "tsx scripts/check-failover.mjs",
-    "check:envio": "tsx scripts/check-envio-queries.mjs"
+    "check:envio": "tsx scripts/check-envio-queries.mjs",
+    "agora:setup": "node scripts/agora-testnet-setup.mjs"
   },
   "devDependencies": {
     "@noble/curves": "^2.2.0",

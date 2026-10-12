@@ -13,6 +13,8 @@ Built for **Monad Metropolis** · **Track: Consumer Products & Payments** · Mon
 
 **Live:** https://companion-monad.vercel.app (the app is at `/app`). Testnet only.
 
+**All docs:** [`docs/README.md`](docs/README.md) is the index of every guide, command and code folder.
+
 **Contents**
 
 1. [The idea in one minute](#1-the-idea-in-one-minute)
