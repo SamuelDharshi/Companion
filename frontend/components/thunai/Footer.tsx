@@ -24,7 +24,7 @@ export default function Footer() {
         </div>
       </div>
       <p className="mx-auto mt-8 max-w-[1680px] px-5 text-[12px] text-ink-faint md:px-8 2xl:px-16">
-        Built for Monad Metropolis on Monad testnet. Testnet funds are labelled stand-ins and have no real value.
+        Built for Monad Metropolis on Monad testnet. Testnet funds have no real value.
       </p>
     </footer>
   );

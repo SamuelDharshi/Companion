@@ -81,7 +81,7 @@ export default function Proof() {
             run.
           </p>
           <p>
-            <b className="text-ink">Testnet only.</b> Tokens are labelled stand-ins and carry no real value.
+            <b className="text-ink">Testnet only.</b> Testnet tokens carry no real value.
           </p>
         </div>
       </div>

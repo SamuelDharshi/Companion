@@ -152,7 +152,7 @@ export default async function TractionPage() {
             <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
               <Stat value={t.holdsOpened} label="Payments held" />
               <Stat value={t.holdsExpired} label="Returned because nobody answered" />
-              <Stat value={dollars(t.dollarsProtected)} label="Test dollars protected" note="Stand-in tokens, no real value." />
+              <Stat value={dollars(t.dollarsProtected)} label="Test dollars protected" note="Testnet tokens, no real value." />
               <Stat value={`${t.checksAnswered} of ${t.checksRequested}`} label="Checks answered by the student" />
             </div>
 
