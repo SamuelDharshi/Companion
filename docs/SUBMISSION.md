@@ -9,7 +9,7 @@
 | 1 | [Agora, Best Cross-Border Payments App](#agora) | Entered. **Live:** every allowance and deposit settles through Agora's real CTK/AUSD pair on Monad testnet. |
 | 2 | [Mera, Best Mera-Powered UX](#mera-ux) | Entered. |
 | 3 | [Mera, One Passkey, Many Keys](#mera-many-keys) | Entered. |
-| 4 | [Best Community Team](#best-community-team) | Entered. Group: **[YOUR CAMPUS GROUP, picked on the hackathon profile]** |
+| 4 | [Best Community Team](#best-community-team) | **Only if our campus group is in the portal's list of onboarded communities.** Group: **[YOUR CAMPUS GROUP]**. If it is not listed, we do not enter. |
 | 5 | [Envio, Best Use of Envio](#envio) | Entered. HyperIndex 3 deployed on Envio Cloud, synced to the chain head, and read by `/traction` and the app. |
 | 6 | [Chainlink, Best workflow with CRE](#chainlink-cre) | Entered. `cre workflow simulate` passes against the live chain. Not deployed to the CRE network. |
 | 7 | [Alchemy, Best Projects using Alchemy](#alchemy) | Entered. Failover RPC verified; the alert webhook is built and tested, awaiting a real delivery. |
