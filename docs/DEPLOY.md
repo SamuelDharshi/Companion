@@ -30,8 +30,8 @@ The Vercel project reads two server-side variables, `RELAYER_URL` and `AGENT_URL
 
 ```bash
 cd frontend
-printf 'https://<your-service>.onrender.com'        | vercel env add RELAYER_URL production --force
-printf 'https://<your-service>.onrender.com/agent'  | vercel env add AGENT_URL   production --force
+printf 'https://companion-api-27cv.onrender.com'        | vercel env add RELAYER_URL production --force
+printf 'https://companion-api-27cv.onrender.com/agent'  | vercel env add AGENT_URL   production --force
 vercel deploy --prod
 ```
 
@@ -52,12 +52,12 @@ Build on Vercel itself, not with `vercel build` on Windows (it cannot create the
    It writes `.render.env` (git-ignored) with exactly the values the service needs, copied from your `.env`. In Render's
    Environment page, **Add from .env** takes the whole file at once. It leaves out `DEPLOYER_PRIVATE_KEY`, which the
    service never needs. Delete `.render.env` afterwards.
-4. Name the service exactly `companion-api` so its address is `https://companion-api.onrender.com`. If Render gives it
-   another address, update the two Vercel variables above and redeploy the site.
-5. When the first deploy is live, check `https://companion-api.onrender.com/health` and `.../agent/health`, then
+4. The name `companion-api` was already taken on Render, so the live service is **https://companion-api-27cv.onrender.com**. The two Vercel
+   variables above point at it. If you ever recreate the service, update them and redeploy the site.
+5. When the first deploy is live, check `https://companion-api-27cv.onrender.com/health` and `.../agent/health`, then
    `https://companion-monad.vercel.app/relayer/health`. The first request after a sleep takes about a minute.
 6. **Keep it awake.** Create a free monitor at [UptimeRobot](https://uptimerobot.com) or [cron-job.org](https://cron-job.org)
-   that requests `https://companion-api.onrender.com/health` every 5 minutes. One free service has 750 hours a month, which
+   that requests `https://companion-api-27cv.onrender.com/health` every 5 minutes. One free service has 750 hours a month, which
    covers a whole month. Before recording or presenting, open `/relayer/health` yourself to be sure it is awake.
 
 Things that will not be obvious:

@@ -128,7 +128,7 @@ Record only after `cre workflow simulate` has passed. Say plainly what CRE does 
 2. **Problem** (25 s): 8 to 613 complaints. A student alone on a call for three hours.
 3. **Insight** (15 s): isolation is the weapon, so make family the second key.
 4. **Product** (30 s): weekly allowance, a hold the parent can stop with Face ID, Check on Arjun, Silent SOS.
-5. **Why new, why Monad** (20 s): a bank's trusted-person idea works inside one bank; Companion works across borders. Monad's precompile verifies a passkey from another continent inside the contract, and a confirmation takes about a second (median 1.31 s measured).
+5. **Why new, why Monad** (20 s): a bank's trusted-person idea works inside one bank; Companion works across borders. Monad's precompile verifies a passkey from another continent inside the contract, and a confirmation takes about a second (median 0.54 s measured).
 6. **Traction and next** (20 s): the `/traction` numbers, honestly split into real families and our own tests. Roadmap: a licensed LRS partner, mainnet, Telugu and Hindi.
 
 ---

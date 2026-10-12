@@ -29,8 +29,8 @@ Raw numbers: [`e2e-testnet.json`](e2e-testnet.json).
 | Chainlink CRE endpoints on the agent | `/cre/apply` and `/cre/status` answer only the CRE token, accept three actions, re-check the chain before acting (not due, not open, not yet), and the agent's own timer stays as a standby. |
 | ERC-8004 | Agent #2187 is registered under the team account. A family's guardian account records a verified save; a stranger's key, a different call, a hold nobody stopped and a repeat are all refused. |
 
-**Measured timings (live testnet, latest run, 23 confirmed transactions):** median **1.31 s**, fastest **0.65 s**,
-slowest **1.83 s**. These are how long the relayer waited for each transaction's receipt. Use no other latency
+**Measured timings (live testnet, latest run, 23 confirmed transactions):** median **0.54 s**, fastest **0.30 s**,
+slowest **0.80 s**, run through the deployed site (Vercel) to the deployed relayer (Render). These are how long the relayer waited for each transaction's receipt. Use no other latency
 figure anywhere.
 
 **Verified live, read-only:**
@@ -58,6 +58,7 @@ and our fallback survives it. `pnpm parity` proves TypeScript and Solidity agree
 | Shared unit tests (`pnpm --filter @thunai/shared test`) | 7 passed (contact rules, same person however typed, masking) |
 | `pnpm agora:check` against the live pair | **not ready, as expected**: token and decimals handling pass; the vault is not whitelisted |
 | Landing page production build | compiled, `/` and `/traction` |
+| Full live end-to-end through the deployed stack | `pnpm e2e:testnet` with the site's `/relayer` and `/agent` as the target: 101 checks passed, so Vercel proxying to the Render relayer and agent works for the whole scene |
 | Deployed site (Vercel) | `https://companion-monad.vercel.app/`, `/traction`, `/app`, a deep link and the service worker all answer 200 |
 | `scripts/serve.mjs` (relayer and agent behind one port, as on Render) | run locally: `/health` reaches the relayer, `/agent/health` reaches the agent |
 | App web export | built; the bundle has no Tamil text and no secrets or RPC keys |
@@ -80,7 +81,6 @@ The relayer and agent use a **Quicknode** endpoint (`MONAD_RPC_URL` in `.env`, n
 | Thing | Why it is unverified |
 |---|---|
 | **The Chainlink CRE workflow** (`cre/`) | Typechecks against `@chainlink/cre-sdk` 1.23, and the agent endpoints it calls are tested. `cre workflow simulate` has **not run**: it needs `cre login`, which the account owner must do. Not deployed to the CRE network. CRE does not write onchain in our design. |
-| **The Render service** | `render.yaml` and `scripts/serve.mjs` are written and the launcher runs locally, but the service has not been created on Render, so the deployed site's `/relayer` and `/agent` do not answer yet. |
 | **The notes key from a real passkey (PRF)** | The e2e uses a deterministic stand-in for the authenticator's PRF output, because a script cannot do WebAuthn PRF. The encryption, storage and read-back are real. `getPasskeyPrfOutput` with the `thunai/notes` salt is written and typechecks, but has not run on a phone. |
 | **Web push delivery to a real browser** | Service worker, signed enrolment and the agent's send are built. No browser has received an alert. On iPhone it needs the app added to the Home Screen. |
 | **Every Face ID flow on a physical phone** | Run in a desktop browser and in tests with software passkeys. Not yet on one Android and one iPhone. |
@@ -98,7 +98,7 @@ The relayer and agent use a **Quicknode** endpoint (`MONAD_RPC_URL` in `.env`, n
 | **Envio deployed** | Needs you to connect the repo on envio.dev. Steps: `docs/ENVIO_DEPLOY.md`. |
 | **Cleanverse** | Blocked: `docs.cleanverse.com` is behind an invitation code, and the three CCP PDFs are not in `docs/vendor/` yet, so nothing was built. Drop them in (and the invitation code, if the site is needed) to resume Phase 7 with a 3-hour time box; if neither is available, drop Cleanverse. |
 | **Aurora Intents** | **Skipped, by decision.** Aurora's docs list Monad as supported for source and destination but never mention a testnet, anywhere (checked the docs index and the Intents Connect, Deposits and Swap chain pages). Only a mainnet flow is documented, which would need real funds and our contracts on mainnet, so nothing was built and nothing was spent. If Aurora's team confirms testnet support, Phase 8 can be picked up with a 3-hour time box. |
-| **Relayer and agent online** | The site is live on Vercel at `https://companion-monad.vercel.app`; the always-on Render service behind it is not created yet (account owner's step). Until it is, the deployed app cannot reach a server. |
+| **A keep-alive monitor for the free Render service** | The relayer and agent run on Render's free plan at `https://companion-api-27cv.onrender.com`, which sleeps after 15 minutes without requests. Until a free pinger (UptimeRobot) hits `/health` every 5 minutes, the keeper is not guaranteed to run. No disk: display names, masked contacts, push subscriptions and pending invites are lost on a restart or redeploy. |
 | **The repository shared with the organisers** | It is public at `github.com/SamuelDharshi/Companion`; share it with `metropolis@hackathon.monad.xyz` if it is made private. |
 | **Alchemy** | Monad testnet is supported by Alchemy. Not integrated: it needs an Alchemy key. The relayer reads an optional `ALCHEMY_RPC_URL` for log reads and nothing else uses it. |
 | **Logo, demo video, pitch video** | Yours to produce; the scripts are in `docs/DEMO.md`. |

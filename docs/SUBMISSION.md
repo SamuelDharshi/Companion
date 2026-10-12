@@ -82,7 +82,7 @@ The conditional logic is real and runs on Monad testnet, not in a mock:
 
 Evidence: 95 Foundry tests (including a fork test against the real Agora pair), `pnpm parity` (TypeScript and Solidity agree on
 every hash), and `pnpm e2e:testnet`, which plays the whole scene on the live chain with fresh random keys: **101
-checks passed**, 23 confirmed transactions, **median 1.31 s** (fastest 0.65 s, slowest 1.83 s).
+checks passed**, 23 confirmed transactions, **median 0.54 s** (fastest 0.30 s, slowest 0.80 s).
 
 **Simulated, and disclosed:** the money is labelled stand-in tokens; "Send money now" plays the licensed remittance partner;
 the real Agora swap is off until Agora whitelists the vault.
@@ -151,7 +151,7 @@ from our build machine, so check one in a browser.
 ## What is verified, and how to check it
 
 `pnpm e2e:testnet` plays the whole scene against the live relayer and agent with fresh random keys. Latest run (12 Oct 2026):
-**101 checks passed**, 23 confirmed transactions, **median 1.31 s** (fastest 0.65 s, slowest 1.83 s). Raw numbers:
+**101 checks passed**, 23 confirmed transactions, **median 0.54 s** (fastest 0.30 s, slowest 0.80 s). Raw numbers:
 [`docs/e2e-testnet.json`](e2e-testnet.json). The landing page lists every transaction of a recorded run with a link, and
 `/traction` counts the contracts' own events live. 95 Foundry tests pass (`pnpm contracts:test`), including a fork test
 against the real Agora pair. `pnpm parity` proves TypeScript and Solidity agree on every hash.
@@ -181,7 +181,7 @@ to send AUSD to another person or across borders.*
 | Mobile app | An Expo app, one codebase and two roles, laid out for a phone. The web build runs in a phone browser and installs to the home screen. Face ID works in the browser, not inside Expo Go (see Honest limits). |
 | Passkey onboarding with Mera | One Face ID per person. No seed phrase, extension, email or OTP. [`app/src/mera/account.ts`](../app/src/mera/account.ts) |
 | An AUSD balance | The student's home screen, shown as dollars only. [`app/app/student/index.tsx`](../app/app/student/index.tsx) |
-| A completed send/receive settled instantly | The guardian's "Send money now" and the weekly allowance credit the student in one transaction; a student's payment is confirmed in the same call. In the testnet run every such call was confirmed in 0.6 to 1.8 s. |
+| A completed send/receive settled instantly | The guardian's "Send money now" and the weekly allowance credit the student in one transaction; a student's payment is confirmed in the same call. In the testnet run every such call was confirmed in 0.3 to 0.8 s. |
 
 ### Stated plainly: the Agora swap is built but switched off
 
@@ -230,7 +230,7 @@ with low-`s` normalisation, and `challengeIndex` and `typeIndex` computed from t
 
 | The judges look at | Our answer |
 |---|---|
-| **Time to first transaction** (taps and seconds) | Measured on testnet: the parent goes from the invite link to a confirmed, signed envelope in **2 taps and 2 Face IDs**, with the transactions confirming in 1.30 s (family registered) and 1.36 s (envelope). The student needs **1 tap and 1 Face ID** to sign in; his first payment is then 2 taps, silent inside the session, confirmed in 1.20 to 1.74 s. The machine time is measured ([`docs/e2e-testnet.json`](e2e-testnet.json)); the human parts (typing a name, the Face ID prompt) have **not** been stopwatch-timed on a phone yet. |
+| **Time to first transaction** (taps and seconds) | Measured on testnet: the parent goes from the invite link to a confirmed, signed envelope in **2 taps and 2 Face IDs**, with the transactions confirming in 0.57 s (family registered) and 0.70 s (envelope). The student needs **1 tap and 1 Face ID** to sign in; his first payment is then 2 taps, silent inside the session, confirmed in 0.32 to 0.69 s. The machine time is measured ([`docs/e2e-testnet.json`](e2e-testnet.json)); the human parts (typing a name, the Face ID prompt) have **not** been stopwatch-timed on a phone yet. |
 | **Session design** | A **15-minute `thunai/acct` signing session** is scoped to routine actions and signs them with no prompt: paying an approved payee, adding money from home, subscribing a device to alerts. **Always re-prompted, by design:** a guardian's decision on a hold (stop or allow), envelope changes and unfreezing the family. A background session can never release a held payment, however recently someone tapped Face ID. |
 | **Session-expiry UX** | When the session ends, an in-place panel says "Tap Face ID to continue" with one button, and the person simply sends again. Details shows "Session active · N min". It is not an error screen. |
 | **The stateless test** | Asserted in the testnet e2e (beat 13, software passkeys): a passkey address alone finds the family, the envelope and the encrypted notes again from the chain. In the app, **Forget this device** followed by one Face ID restores the family, and **Open my notes with Face ID** reads the notes back. **Not yet shown on a physical phone.** |

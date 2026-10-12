@@ -1,85 +1,85 @@
 {
-  "ranAt": "2026-10-11T20:35:47.991Z",
+  "ranAt": "2026-10-12T05:06:46.794Z",
   "network": "Monad testnet",
   "chainId": 10143,
   "vault": "0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87",
   "passed": true,
   "confirmedTransactions": 23,
-  "overallMedianMs": 1311,
-  "overallMinMs": 649,
-  "overallMaxMs": 1834,
+  "overallMedianMs": 536,
+  "overallMinMs": 297,
+  "overallMaxMs": 803,
   "byEndpoint": {
     "/onboard/guardian": {
       "count": 1,
-      "minMs": 1304,
-      "medianMs": 1304,
-      "maxMs": 1304
+      "minMs": 569,
+      "medianMs": 569,
+      "maxMs": 569
     },
     "/family/envelope": {
       "count": 1,
-      "minMs": 1361,
-      "medianMs": 1361,
-      "maxMs": 1361
+      "minMs": 703,
+      "medianMs": 703,
+      "maxMs": 703
     },
     "/fund": {
       "count": 1,
-      "minMs": 1219,
-      "medianMs": 1219,
-      "maxMs": 1219
+      "minMs": 465,
+      "medianMs": 465,
+      "maxMs": 465
     },
     "/withdraw": {
       "count": 9,
-      "minMs": 1197,
-      "medianMs": 1311,
-      "maxMs": 1736
+      "minMs": 324,
+      "medianMs": 472,
+      "maxMs": 690
     },
     "/hold/resolve": {
       "count": 2,
-      "minMs": 1125,
-      "medianMs": 1834,
-      "maxMs": 1834
+      "minMs": 536,
+      "medianMs": 556,
+      "maxMs": 556
     },
     "/check/request": {
       "count": 1,
-      "minMs": 1416,
-      "medianMs": 1416,
-      "maxMs": 1416
+      "minMs": 587,
+      "medianMs": 587,
+      "maxMs": 587
     },
     "/check/prove": {
       "count": 1,
-      "minMs": 1312,
-      "medianMs": 1312,
-      "maxMs": 1312
+      "minMs": 297,
+      "medianMs": 297,
+      "maxMs": 297
     },
     "/report": {
       "count": 2,
-      "minMs": 1527,
-      "medianMs": 1741,
-      "maxMs": 1741
+      "minMs": 383,
+      "medianMs": 455,
+      "maxMs": 455
     },
     "/freeze": {
       "count": 1,
-      "minMs": 1307,
-      "medianMs": 1307,
-      "maxMs": 1307
+      "minMs": 394,
+      "medianMs": 394,
+      "maxMs": 394
     },
     "/unfreeze": {
       "count": 1,
-      "minMs": 1254,
-      "medianMs": 1254,
-      "maxMs": 1254
+      "minMs": 455,
+      "medianMs": 455,
+      "maxMs": 455
     },
     "/notes": {
       "count": 2,
-      "minMs": 1223,
-      "medianMs": 1732,
-      "maxMs": 1732
+      "minMs": 536,
+      "medianMs": 565,
+      "maxMs": 565
     },
     "/feedback/submit": {
       "count": 1,
-      "minMs": 649,
-      "medianMs": 649,
-      "maxMs": 649
+      "minMs": 803,
+      "medianMs": 803,
+      "maxMs": 803
     }
   }
 }

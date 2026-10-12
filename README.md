@@ -4,7 +4,7 @@
 
 *Companion* (**Thunai** in Tamil, which means "companion") is a family money agent for Indian parents with a child studying abroad.
 
-- **Every week**, it moves the allowance across borders in about a second (measured median 1.31 s on Monad testnet).
+- **Every week**, it moves the allowance across borders in about a second (measured median 0.54 s on Monad testnet).
 - **When something is wrong**, it pauses the money and pages Kavya before anything moves.
 
 Built for **Monad Metropolis** · **Track: Consumer Products & Payments** · Monad Testnet (10143)
@@ -616,13 +616,13 @@ The rescue has to finish **while the scammer is still on the line.**
 ```
    Time from "tap" to "confirmed" on Monad testnet (measured, pnpm e2e:testnet)
 
-   fastest   0.65 s  ████████████
-   median    1.31 s  ████████████████████████
-   slowest   1.83 s  ██████████████████████████████
+   fastest   0.30 s  ██████
+   median    0.54 s  ███████████
+   slowest   0.80 s  ████████████████
                      0       0.5      1.0      1.5 s
 ```
 
-**Measured on live Monad testnet** (`pnpm e2e:testnet`, 23 confirmed transactions): median **1.31 s**, fastest 0.65 s, slowest 1.83 s. Raw numbers are in [`docs/e2e-testnet.json`](docs/e2e-testnet.json), and the landing page lists every transaction of a recorded run with a link. No other latency figure is quoted anywhere.
+**Measured on live Monad testnet** (`pnpm e2e:testnet`, 23 confirmed transactions): median **0.54 s**, fastest 0.30 s, slowest 0.80 s, run through the deployed site and relayer. Raw numbers are in [`docs/e2e-testnet.json`](docs/e2e-testnet.json), and the landing page lists every transaction of a recorded run with a link. No other latency figure is quoted anywhere.
 
 ---
 

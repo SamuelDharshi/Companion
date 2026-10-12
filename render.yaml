@@ -9,7 +9,7 @@
 #
 # FREE plan. A free web service sleeps after 15 minutes without inbound traffic, and a sleeping service has no keeper,
 # so an unanswered hold would not expire and the weekly allowance would not run. Keep it awake with a free pinger that
-# requests https://companion-api.onrender.com/health every 5 minutes (UptimeRobot or cron-job.org). One free service has
+# requests https://companion-api-27cv.onrender.com/health every 5 minutes (UptimeRobot or cron-job.org). One free service has
 # enough monthly hours (750) to stay up all month. docs/DEPLOY.md has the steps.
 #
 # A free service has no persistent disk, so DATA_DIR is temporary and is wiped on every restart or redeploy. The chain keeps
