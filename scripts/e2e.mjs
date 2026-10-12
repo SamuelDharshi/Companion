@@ -946,6 +946,51 @@ try {
     assert((await post(`${RELAYER_URL}/feedback/prepare`, {}, { familyId: String(familyId), holdId: String(holdId) })).status === 409, "one save counts once");
   }
 
+  // Opt-in (E2E_CRE_DEMO=1, testnet, local relayer and agent): leave a real hold open, run the Chainlink CRE simulation
+  // against it, and save the output. The longer hold timeout is signed by the parent at the very end, so the
+  // fail-safe beat above, which needs a short one, is unaffected.
+  if (TESTNET && process.env.E2E_CRE_DEMO === "1") {
+    log("CRE", "Chainlink CRE simulation against a real open hold");
+    const longEnvelope = { ...envelope, holdTimeout: 900n, nextRunAt: BigInt(Math.floor(Date.now() / 1000) + 7 * 86400) };
+    const longJson = Object.fromEntries(Object.entries(longEnvelope).map(([k, v]) => [k, typeof v === "bigint" ? v.toString() : v]));
+    const longChallenge = envelopeChallenge(config.chainId, config.thunaiVault, familyId, longEnvelope);
+    await api("/family/envelope", {
+      method: "POST",
+      body: JSON.stringify({ familyId: String(familyId), envelope: longJson, auth: signAssertion(ammaPasskey, longChallenge) }),
+    });
+    ok("the parent signed a 15-minute hold window");
+
+    const digits = String(Math.floor(Math.random() * 1e7)).padStart(7, "0");
+    const stranger = await api("/payee/resolve", {
+      method: "POST",
+      body: JSON.stringify({ familyId: String(familyId), name: "Caller", contact: `+1 415 ${digits.slice(0, 3)} ${digits.slice(3)}` }),
+    });
+    const demoHold = await sendMoney(stranger.address, 60, "immigration bond");
+    assert(demoHold.held === true, `a payment to someone new is held (hold ${demoHold.holdId})`);
+    const heldAt = Date.now();
+
+    // The workflow reminds the parent once, in the minute after a hold has been open for 120 s.
+    const waitMs = Math.max(0, 130_000 - (Date.now() - heldAt));
+    ok(`waiting ${Math.round(waitMs / 1000)} s so the hold is old enough to be reminded about`);
+    await sleep(waitMs);
+
+    const bin = process.env.CRE_BIN || join(process.env.LOCALAPPDATA || "", "Programs", "cre", "cre.exe");
+    const sim = spawnSync(
+      bin,
+      ["workflow", "simulate", "companion-orchestrator", "--target", "staging-settings", "--config", "./config.local.json", "--non-interactive", "--trigger-index", "0"],
+      { cwd: join(root, "cre"), encoding: "utf8", timeout: 180_000 },
+    );
+    const output = `${sim.stdout ?? ""}${sim.stderr ?? ""}`.replace(/\[[0-9;]*m/g, "");
+    writeFileSync(join(root, "docs", "cre-simulation.txt"), output);
+    ok("simulation output saved to docs/cre-simulation.txt");
+    assert(sim.status === 0 && output.includes("Workflow Simulation Result"), "the CRE simulation completed");
+    assert(output.includes("Read Monad testnet:"), "the workflow read the vault on Monad testnet");
+    assert(
+      output.includes(`Hold ${demoHold.holdId} still waiting`) && output.includes("parent reminded"),
+      `the workflow found the open hold and had the agent remind the parent (hold ${demoHold.holdId})`,
+    );
+  }
+
   if (TESTNET) {
     const byPath = {};
     for (const t of timings) (byPath[t.path] ??= []).push(t.latencyMs);
