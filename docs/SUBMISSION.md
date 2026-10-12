@@ -11,7 +11,7 @@
 | 3 | [Mera, One Passkey, Many Keys](#mera-many-keys) | Entered. |
 | 4 | [Best Community Team](#best-community-team) | Entered. Group: **[YOUR CAMPUS GROUP, picked on the hackathon profile]** |
 | 5 | [Envio, Best Use of Envio](#envio) | Enter only once the indexer is deployed. **Not deployed yet.** |
-| 6 | [Chainlink, Best workflow with CRE](#chainlink-cre) | Workflow built and typechecked; endpoints tested. **Simulation not run yet.** |
+| 6 | [Chainlink, Best workflow with CRE](#chainlink-cre) | Entered. `cre workflow simulate` passes against the live chain. Not deployed to the CRE network. |
 | 7 | [Alchemy, Best Projects using Alchemy](#alchemy) | Supported on Monad testnet. **Not integrated yet** (needs an Alchemy key). |
 
 Not entered: Dynamic and Privy (they would replace Mera as the account layer), Cleanverse (a Trust-track bounty), Nansen
@@ -82,7 +82,7 @@ The conditional logic is real and runs on Monad testnet, not in a mock:
 
 Evidence: 95 Foundry tests (including a fork test against the real Agora pair), `pnpm parity` (TypeScript and Solidity agree on
 every hash), and `pnpm e2e:testnet`, which plays the whole scene on the live chain with fresh random keys: **101
-checks passed**, 23 confirmed transactions, **median 0.54 s** (fastest 0.30 s, slowest 0.80 s).
+checks passed**, 23 confirmed transactions, **median 0.54 s** (fastest 0.28 s, slowest 0.70 s).
 
 **Simulated, and disclosed:** the money is labelled stand-in tokens; "Send money now" plays the licensed remittance partner;
 the real Agora swap is off until Agora whitelists the vault.
@@ -151,7 +151,7 @@ from our build machine, so check one in a browser.
 ## What is verified, and how to check it
 
 `pnpm e2e:testnet` plays the whole scene against the live relayer and agent with fresh random keys. Latest run (12 Oct 2026):
-**101 checks passed**, 23 confirmed transactions, **median 0.54 s** (fastest 0.30 s, slowest 0.80 s). Raw numbers:
+**101 checks passed**, 23 confirmed transactions, **median 0.54 s** (fastest 0.28 s, slowest 0.70 s). Raw numbers:
 [`docs/e2e-testnet.json`](e2e-testnet.json). The landing page lists every transaction of a recorded run with a link, and
 `/traction` counts the contracts' own events live. 95 Foundry tests pass (`pnpm contracts:test`), including a fork test
 against the real Agora pair. `pnpm parity` proves TypeScript and Solidity agree on every hash.
@@ -181,7 +181,7 @@ to send AUSD to another person or across borders.*
 | Mobile app | An Expo app, one codebase and two roles, laid out for a phone. The web build runs in a phone browser and installs to the home screen. Face ID works in the browser, not inside Expo Go (see Honest limits). |
 | Passkey onboarding with Mera | One Face ID per person. No seed phrase, extension, email or OTP. [`app/src/mera/account.ts`](../app/src/mera/account.ts) |
 | An AUSD balance | The student's home screen, shown as dollars only. [`app/app/student/index.tsx`](../app/app/student/index.tsx) |
-| A completed send/receive settled instantly | The guardian's "Send money now" and the weekly allowance credit the student in one transaction; a student's payment is confirmed in the same call. In the testnet run every such call was confirmed in 0.3 to 0.8 s. |
+| A completed send/receive settled instantly | The guardian's "Send money now" and the weekly allowance credit the student in one transaction; a student's payment is confirmed in the same call. In the testnet run every such call was confirmed in 0.3 to 0.7 s. |
 
 ### Stated plainly: the Agora swap is built but switched off
 
@@ -230,7 +230,7 @@ with low-`s` normalisation, and `challengeIndex` and `typeIndex` computed from t
 
 | The judges look at | Our answer |
 |---|---|
-| **Time to first transaction** (taps and seconds) | Measured on testnet: the parent goes from the invite link to a confirmed, signed envelope in **2 taps and 2 Face IDs**, with the transactions confirming in 0.57 s (family registered) and 0.70 s (envelope). The student needs **1 tap and 1 Face ID** to sign in; his first payment is then 2 taps, silent inside the session, confirmed in 0.32 to 0.69 s. The machine time is measured ([`docs/e2e-testnet.json`](e2e-testnet.json)); the human parts (typing a name, the Face ID prompt) have **not** been stopwatch-timed on a phone yet. |
+| **Time to first transaction** (taps and seconds) | Measured on testnet: the parent goes from the invite link to a confirmed, signed envelope in **2 taps and 2 Face IDs**, with the transactions confirming in 0.68 s (family registered) and 0.68 s (envelope). The student needs **1 tap and 1 Face ID** to sign in; his first payment is then 2 taps, silent inside the session, confirmed in 0.28 to 0.70 s. The machine time is measured ([`docs/e2e-testnet.json`](e2e-testnet.json)); the human parts (typing a name, the Face ID prompt) have **not** been stopwatch-timed on a phone yet. |
 | **Session design** | A **15-minute `thunai/acct` signing session** is scoped to routine actions and signs them with no prompt: paying an approved payee, adding money from home, subscribing a device to alerts. **Always re-prompted, by design:** a guardian's decision on a hold (stop or allow), envelope changes and unfreezing the family. A background session can never release a held payment, however recently someone tapped Face ID. |
 | **Session-expiry UX** | When the session ends, an in-place panel says "Tap Face ID to continue" with one button, and the person simply sends again. Details shows "Session active · N min". It is not an error screen. |
 | **The stateless test** | Asserted in the testnet e2e (beat 13, software passkeys): a passkey address alone finds the family, the envelope and the encrypted notes again from the chain. In the app, **Forget this device** followed by one Face ID restores the family, and **Open my notes with Face ID** reads the notes back. **Not yet shown on a physical phone.** |
@@ -301,8 +301,9 @@ None of this is claimed until the endpoint is live and the app reads from it.
 
 ## Chainlink CRE
 
-**Status: built; the simulation has not been run yet** (it needs a CRE login from the account owner). Details and the
-exact command are in [`cre/README.md`](../cre/README.md).
+**Status: built, and `cre workflow simulate` passes against live Monad testnet.** The saved output is
+[`docs/cre-simulation.txt`](cre-simulation.txt); the workflow, its limits and how to run it are in [`cre/README.md`](../cre/README.md).
+It is **not deployed to the CRE network** (that needs Early Access approval).
 
 Asked for: *how your project meaningfully utilizes Chainlink CRE as an orchestration layer.*
 
@@ -312,7 +313,7 @@ after holds nobody answered. The CRE workflow `companion-orchestrator` is the sc
 | Step | What CRE does |
 |---|---|
 | Trigger | A cron trigger, every minute. |
-| Onchain read | `EVMClient` reads Monad testnet (chain 10143, `monad-testnet`): how many families and holds exist, which families have an allowance due, and the status, `openedAt` and `releaseAt` of each recent hold. |
+| Onchain read | `EVMClient` reads Monad testnet (chain 10143, `monad-testnet`): how many families and holds exist, which families have an allowance due, and the status, `openedAt` and `releaseAt` of each recent hold. CRE allows 15 chain reads per run, so the workflow batches everything through Multicall3 and makes **two** reads however many families there are. |
 | Decide | From the contract's own numbers only: is the allowance due, is the hold still open, has its time run out. |
 | External call | `HTTPClient` calls Companion's agent at `/agent/cre/apply` with a secret from CRE's secret store, to run the allowance, expire the hold (money returns to the student) or remind the parent. |
 
@@ -327,6 +328,8 @@ is the wrong trade. So reads are onchain and actions go through the agent's auth
 **Fallback.** `ORCHESTRATOR=cre|keeper` on the agent. With `cre`, the agent's own timer becomes a standby that runs only if no
 authenticated CRE call has arrived for five minutes, so a stopped workflow can never leave an allowance unsent or a hold
 unexpired. Tested in `pnpm e2e` (beat 11c).
+
+**What the simulation showed** (live testnet, saved in `docs/cre-simulation.txt`): the workflow read the vault (19 families, 94 holds), found a hold the test had just opened and left unanswered, and had the agent remind the parent about it ("Hold 94 still waiting after 172s: parent reminded (classified as script 1)", the fake-officer scam). In the same run it found four real holds nobody had answered and had the agent return that money to the students. `E2E_CRE_DEMO=1 pnpm e2e:testnet` reproduces it. With the deployed agent as the target and nothing due, it correctly did nothing.
 
 **Video (2 min):** [`docs/DEMO.md`](DEMO.md#chainlink-video), showing a successful `cre workflow simulate`.
 
@@ -409,7 +412,7 @@ tunnel for a local run, are in [`docs/DEMO.md`](DEMO.md).
 - **The AI explanation is optional and was not used.** Our Anthropic account has no credit, so every hold used the rules' own
   explanation.
 - **Envio is not deployed.** The app reads the relayer's own event counts and says so.
-- **The CRE simulation has not been run yet**, and CRE does not write onchain in our design (see the Chainlink section).
+- **The CRE workflow is not deployed to the CRE network** (that needs Early Access), and CRE does not write onchain in our design (see the Chainlink section).
 - **Alchemy is not integrated.**
 - **Cleanverse and Aurora are not built.**
 - **The English-only app** has no Tamil UI.

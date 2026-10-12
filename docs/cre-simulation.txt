@@ -1,0 +1,32 @@
+✓ Workflow compiled
+✓ Simulation limits enabled
+  HTTP: req=120kb resp=250kb timeout=10s | ConfHTTP: req=125kb resp=500kb timeout=1m30s | Consensus obs=25kb | ChainWrite evm_report=50kb evm_gas=10000000 solana_report=265b solana_cu=300000 | WASM binary=100mb compressed=20mb
+  Binary hash: 4719cbf828a0042c1b1d8dd1cdba23e9d4bf1cf78e15053763c36196ee680669
+  Config hash: 32383bc82a778d80066467ba885847f6c49b34b89325ada7ceaf66c4db94db1a
+2026-10-12T11:23:11Z [SIMULATION] Simulator Initialized
+
+2026-10-12T11:23:11Z [SIMULATION] Running trigger trigger=cron-trigger@1.0.0
+2026-10-12T11:23:11Z [USER LOG] Read Monad testnet: 19 families, 94 holds
+2026-10-12T11:23:12Z [USER LOG] Checked 19 allowances and 25 recent holds in one read
+2026-10-12T11:23:12Z [USER LOG] Hold 94 still waiting after 172s: parent reminded (classified as script 1)
+2026-10-12T11:23:14Z [USER LOG] Hold 93 unanswered past its time: money returned to the student
+2026-10-12T11:23:16Z [USER LOG] Hold 92 unanswered past its time: money returned to the student
+2026-10-12T11:23:17Z [USER LOG] Hold 90 unanswered past its time: money returned to the student
+2026-10-12T11:23:18Z [USER LOG] Hold 89 unanswered past its time: money returned to the student
+2026-10-12T11:23:18Z [USER LOG] Done: {"families":19,"holds":94,"allowancesSent":0,"holdsExpired":4,"parentsReminded":1,"skipped":0,"failed":0}
+
+✓ Workflow Simulation Result:
+"{\"families\":19,\"holds\":94,\"allowancesSent\":0,\"holdsExpired\":4,\"parentsReminded\":1,\"skipped\":0,\"failed\":0}"
+
+2026-10-12T11:23:18Z [SIMULATION] Execution finished signal received
+2026-10-12T11:23:18Z [SIMULATION] Skipping WorkflowEngineV2
+
+╭──────────────────────────────────────────────────────╮
+│ Simulation complete! Ready to deploy your workflow?  │
+│                                                      │
+│ Run cre account access to request deployment access. │
+╰──────────────────────────────────────────────────────╯
+Initializing...
+Loading settings...
+Checking RPC connectivity...
+Compiling workflow...

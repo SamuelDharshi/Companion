@@ -117,7 +117,7 @@ Record only after `cre workflow simulate` has passed. Say plainly what CRE does 
 
 1. **0:00** `cre/companion-orchestrator/main.ts`: the cron trigger, the EVM reads of the vault, the HTTP call to the agent. One sentence: "CRE is the schedule and the eyes; the agent holds the keeper key."
 2. **0:30** In the app, send a payment to a new person so a hold is open. Wait for the reminder window.
-3. **0:50** Run `cre workflow simulate companion-orchestrator --target staging-settings --non-interactive --trigger-index 0`. Show the log lines: the chain read ("N families, N holds"), the hold found, and the agent's answer.
+3. **0:50** From the `cre` folder, run `cre workflow simulate companion-orchestrator --target staging-settings --config ./config.local.json --non-interactive --trigger-index 0` (use `config.local.json` so it talks to your local agent, which holds the hold's briefing). Show the log lines: the chain read ("N families, N holds"), "Hold N still waiting after 130s: parent reminded", and the final result. `docs/cre-simulation.txt` is a saved copy if the live run misbehaves.
 4. **1:30** Say the limit: no onchain write, because the vault has no `onReport`; actions go through the agent, which re-checks the chain. And the fallback: `ORCHESTRATOR=cre|keeper`, with the agent's own timer as standby.
 
 ---

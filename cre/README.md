@@ -14,10 +14,10 @@ parent's Face ID.
    ┌────────────────────▼─────────────────────┐
    │ companion-orchestrator (CRE workflow)    │
    │                                          │
-   │ 1. READ Monad testnet (chain 10143)      │◄── EVMClient.callContract, on every DON node:
-   │      familyCount, holdCount              │      familyCount()  holdCount()
-   │      allowanceDue(familyId)              │      allowanceDue(id)  hold(id)
-   │      hold(holdId)                        │
+   │ 1. READ Monad testnet (chain 10143)      │◄── EVMClient.callContract, on every DON node,
+   │      familyCount, holdCount              │      batched through Multicall3 so a run is
+   │      allowanceDue(familyId)              │      two reads (CRE allows 15 per run):
+   │      hold(holdId)                        │      familyCount() holdCount() allowanceDue(id) hold(id)
    │                                          │
    │ 2. DECIDE from the contract's own        │
    │      numbers: due flag, status,          │
@@ -77,7 +77,7 @@ cd companion-orchestrator && bun install && cd ..
 
 # 1. against your own local agent (pnpm dev running, ORCHESTRATOR and CRE_TOKEN set in the root .env)
 cre workflow simulate companion-orchestrator --target staging-settings \
-  --config companion-orchestrator/config.local.json --non-interactive --trigger-index 0
+  --config ./config.local.json --non-interactive --trigger-index 0
 
 # 2. against the deployed agent
 cre workflow simulate companion-orchestrator --target staging-settings --non-interactive --trigger-index 0
@@ -101,7 +101,8 @@ answer. `docs/DEMO.md` has the script.
 |---|---|
 | Workflow compiles and typechecks against `@chainlink/cre-sdk` 1.23 | verified |
 | Agent endpoints `/cre/apply` and `/cre/status`: token required, three actions, re-check the chain, standby timer | verified in `pnpm e2e` (beat 11c) |
-| `cre workflow simulate` | **not run yet**: it needs `cre login`, which has to be done by the account owner |
-| Deployed to the CRE network | no |
+| `cre workflow simulate` against live Monad testnet | **passes**, with the local agent and with the deployed agent. Output: [`docs/cre-simulation.txt`](../docs/cre-simulation.txt). Reproduce with `E2E_CRE_DEMO=1 pnpm e2e:testnet` (needs the CRE CLI logged in, and `pnpm dev` running) |
+| CRE chain-read limit (15 per run) | met: one Multicall3 read for the counts and one for every allowance flag and recent hold |
+| Deployed to the CRE network | no, and not planned: it needs Early Access approval |
 
 See [`docs/STATUS.md`](../docs/STATUS.md) for the project-wide list.

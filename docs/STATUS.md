@@ -26,11 +26,12 @@ Raw numbers: [`e2e-testnet.json`](e2e-testnet.json).
 | Lock-down | `/fund`, the agent's webhooks and dev routes need their tokens and do not exist without them. Deposits need the guardian's own signature and are capped and replay-proof. |
 | Web push subscription | Only the family member's own key can subscribe a device to alerts. |
 | Pay a new person by name and phone | A name and a phone number become a payee with no address typed or shown; the same number typed two ways is the same person; a number without a country code is refused; the parent's hold card reads the name and a masked contact; a report follows the contact, so the next family typing it is held for the network's reason. |
+| Chainlink CRE workflow (`cre workflow simulate`, CLI 1.38.0, SDK 1.23.0) | Passes against live Monad testnet, with the agent running locally and again with the deployed agent. It read the vault (19 families, 94 holds) in two chain reads through Multicall3 (CRE allows 15 reads per run), found the open hold the test had just created, and had the agent remind the parent about it (hold 94, classified as the fake-officer scam). In the same run it returned the money on four real unanswered holds. Output saved in `docs/cre-simulation.txt`. `E2E_CRE_DEMO=1 pnpm e2e:testnet` reproduces it. |
 | Chainlink CRE endpoints on the agent | `/cre/apply` and `/cre/status` answer only the CRE token, accept three actions, re-check the chain before acting (not due, not open, not yet), and the agent's own timer stays as a standby. |
 | ERC-8004 | Agent #2187 is registered under the team account. A family's guardian account records a verified save; a stranger's key, a different call, a hold nobody stopped and a repeat are all refused. |
 
-**Measured timings (live testnet, latest run, 23 confirmed transactions):** median **0.54 s**, fastest **0.30 s**,
-slowest **0.80 s**, run through the deployed site (Vercel) to the deployed relayer (Render). These are how long the relayer waited for each transaction's receipt. Use no other latency
+**Measured timings (live testnet, latest run, 23 confirmed transactions):** median **0.54 s**, fastest **0.28 s**,
+slowest **0.70 s**, run through the deployed site (Vercel) to the deployed relayer (Render). These are how long the relayer waited for each transaction's receipt. Use no other latency
 figure anywhere.
 
 **Verified live, read-only:**
@@ -80,7 +81,7 @@ The relayer and agent use a **Quicknode** endpoint (`MONAD_RPC_URL` in `.env`, n
 
 | Thing | Why it is unverified |
 |---|---|
-| **The Chainlink CRE workflow** (`cre/`) | Typechecks against `@chainlink/cre-sdk` 1.23, and the agent endpoints it calls are tested. `cre workflow simulate` has **not run**: it needs `cre login`, which the account owner must do. Not deployed to the CRE network. CRE does not write onchain in our design. |
+| **The Chainlink CRE workflow on the CRE network** | Not deployed: that needs CRE Early Access approval. The simulation itself is verified (see above). CRE does not write onchain in our design. |
 | **The notes key from a real passkey (PRF)** | The e2e uses a deterministic stand-in for the authenticator's PRF output, because a script cannot do WebAuthn PRF. The encryption, storage and read-back are real. `getPasskeyPrfOutput` with the `thunai/notes` salt is written and typechecks, but has not run on a phone. |
 | **Web push delivery to a real browser** | Service worker, signed enrolment and the agent's send are built. No browser has received an alert. On iPhone it needs the app added to the Home Screen. |
 | **Every Face ID flow on a physical phone** | Run in a desktop browser and in tests with software passkeys. Not yet on one Android and one iPhone. |
@@ -100,6 +101,7 @@ The relayer and agent use a **Quicknode** endpoint (`MONAD_RPC_URL` in `.env`, n
 | **Aurora Intents** | **Skipped, by decision.** Aurora's docs list Monad as supported for source and destination but never mention a testnet, anywhere (checked the docs index and the Intents Connect, Deposits and Swap chain pages). Only a mainnet flow is documented, which would need real funds and our contracts on mainnet, so nothing was built and nothing was spent. If Aurora's team confirms testnet support, Phase 8 can be picked up with a 3-hour time box. |
 | **A keep-alive monitor for the free Render service** | The relayer and agent run on Render's free plan at `https://companion-api-27cv.onrender.com`, which sleeps after 15 minutes without requests. Until a free pinger (UptimeRobot) hits `/health` every 5 minutes, the keeper is not guaranteed to run. No disk: display names, masked contacts, push subscriptions and pending invites are lost on a restart or redeploy. |
 | **The repository shared with the organisers** | It is public at `github.com/SamuelDharshi/Companion`; share it with `metropolis@hackathon.monad.xyz` if it is made private. |
+| **CRE video** | Yours to record; script in `docs/DEMO.md`. |
 | **Alchemy** | Monad testnet is supported by Alchemy. Not integrated: it needs an Alchemy key. The relayer reads an optional `ALCHEMY_RPC_URL` for log reads and nothing else uses it. |
 | **Logo, demo video, pitch video** | Yours to produce; the scripts are in `docs/DEMO.md`. |
 | **A native app** | Face ID works in the phone's browser, not in Expo Go. |
@@ -134,4 +136,4 @@ Read from the pages in the hackathon resources list, 11 Oct 2026:
 - It protects money held in the app, not the student's bank account. Silent SOS and Check on Arjun break the isolation instead.
 - Parent alerts reach her by WhatsApp link and by opening the app. Browser push is built but not proven on a device.
 - The AI explanation is optional. Fixed rules decide every hold, and a model can never move or release money.
-- Envio is not deployed. The Chainlink CRE simulation has not run. Alchemy is not integrated. Cleanverse and Aurora are not built.
+- Envio is not deployed. Alchemy is not integrated. Cleanverse and Aurora are not built.

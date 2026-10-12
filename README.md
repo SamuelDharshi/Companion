@@ -9,7 +9,7 @@
 
 Built for **Monad Metropolis** · **Track: Consumer Products & Payments** · Monad Testnet (10143)
 
-**Bounties:** Agora Cross-Border Payments · Mera "Best Mera-Powered UX" · Mera "One Passkey, Many Keys" · Best Community Team. Envio, Chainlink CRE and Alchemy are in progress and described with their exact status in [`docs/SUBMISSION.md`](docs/SUBMISSION.md).
+**Bounties:** Agora Cross-Border Payments · Mera "Best Mera-Powered UX" · Mera "One Passkey, Many Keys" · Best Community Team. Chainlink CRE is built and simulated; Envio and Alchemy are in progress. Each is described with its exact status in [`docs/SUBMISSION.md`](docs/SUBMISSION.md).
 
 **Live:** https://companion-monad.vercel.app (the app is at `/app`). Testnet only.
 
@@ -616,13 +616,13 @@ The rescue has to finish **while the scammer is still on the line.**
 ```
    Time from "tap" to "confirmed" on Monad testnet (measured, pnpm e2e:testnet)
 
-   fastest   0.30 s  ██████
+   fastest   0.28 s  ██████
    median    0.54 s  ███████████
-   slowest   0.80 s  ████████████████
+   slowest   0.70 s  ██████████████
                      0       0.5      1.0      1.5 s
 ```
 
-**Measured on live Monad testnet** (`pnpm e2e:testnet`, 23 confirmed transactions): median **0.54 s**, fastest 0.30 s, slowest 0.80 s, run through the deployed site and relayer. Raw numbers are in [`docs/e2e-testnet.json`](docs/e2e-testnet.json), and the landing page lists every transaction of a recorded run with a link. No other latency figure is quoted anywhere.
+**Measured on live Monad testnet** (`pnpm e2e:testnet`, 23 confirmed transactions): median **0.54 s**, fastest 0.28 s, slowest 0.70 s, run through the deployed site and relayer. Raw numbers are in [`docs/e2e-testnet.json`](docs/e2e-testnet.json), and the landing page lists every transaction of a recorded run with a link. No other latency figure is quoted anywhere.
 
 ---
 
@@ -666,7 +666,7 @@ The app reads the contract and the relayer directly. There is no indexer in the 
 | [`contracts/`](contracts) | `ThunaiVault.sol`, `ScamSignals.sol`, 95 Foundry tests (including a fork test against the real Agora pair), deploy script |
 | [`relayer/`](relayer) | Gas sponsorship, `eth_sendRawTransactionSync`, intent API |
 | [`agent/`](agent) | Allowance runner, keeper, classifier, pager |
-| [`cre/`](cre) | A Chainlink CRE workflow that reads the vault on Monad testnet and drives the allowance and the unanswered holds through the agent. Typechecked; simulation pending. |
+| [`cre/`](cre) | A Chainlink CRE workflow that reads the vault on Monad testnet and drives the allowance and the unanswered holds through the agent. `cre workflow simulate` passes against the live chain; output in [`docs/cre-simulation.txt`](docs/cre-simulation.txt). Not deployed to the CRE network. |
 | [`indexer/`](indexer) | An Envio indexer (config, schema, handlers). **Included but not deployed.** |
 | [`app/`](app) | Expo app — both roles, every screen |
 | [`frontend/`](frontend) | The landing page (Next.js). Its numbers come from a recorded run on testnet. |
@@ -821,9 +821,10 @@ word on their screens.
 - [**Mera** — one passkey, many keys](docs/SUBMISSION.md#mera-many-keys)
 - Best Community Team (selected on our hackathon profile)
 
+[Chainlink CRE](docs/SUBMISSION.md#chainlink-cre): the workflow simulates successfully against the live chain and the deployed agent.
+
 In progress, and only claimed once working: [Envio](docs/SUBMISSION.md#envio) (the indexer is included in `/indexer` but is not
-deployed; see [`docs/ENVIO_DEPLOY.md`](docs/ENVIO_DEPLOY.md)), [Chainlink CRE](docs/SUBMISSION.md#chainlink-cre) (built, simulation
-not yet run) and [Alchemy](docs/SUBMISSION.md#alchemy) (not integrated yet).
+deployed; see [`docs/ENVIO_DEPLOY.md`](docs/ENVIO_DEPLOY.md)) and [Alchemy](docs/SUBMISSION.md#alchemy) (not integrated yet).
 
 Not entered: Dynamic and Privy (they would replace Mera as the account layer), Cleanverse, Nansen, Aurora, Kuru, Perpl, Agora
 Trading, MetaMask and Hunyuan. [`docs/STATUS.md`](docs/STATUS.md) lists exactly what is verified, unverified and not done.
