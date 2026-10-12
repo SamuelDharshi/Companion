@@ -1,5 +1,9 @@
 # Agora whitelist request
 
+> **No longer needed on testnet.** Agora's docs describe a self-service Whitelister on every testnet (`0x7c10F56d6f04a51376393a1C3670e966863F6BD5`). On 12 Oct we used it
+> (`scripts/agora-testnet-setup.mjs`) and turned Instant Settlement on ([tx](https://testnet.monadexplorer.com/tx/0xa74d41207fb028551fcec60ff9b4fee0aed9f39e7fa151dd90b98ffa94c65622)). The request below is kept for a
+> mainnet conversation, where approval goes through Agora's KYC.
+
 Ready to paste into the Agora bounty channel. Every address below is deployed on Monad testnet
 (chain 10143) and can be checked with `pnpm agora:check`.
 

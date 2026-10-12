@@ -78,8 +78,8 @@ Passkey onboarding, an AUSD balance, a completed send and receive settled instan
 1. **0:00** Create the student account: one Face ID. No seed phrase, no email.
 2. **0:20** Kavya accepts the invite and signs the allowance.
 3. **0:40** Show Arjun's balance in **dollars**. Kavya taps **Send money now**; it arrives and the **How fast** card shows the measured seconds.
-4. **1:10** Details: "Agora Instant Settlement: off (disclosed fallback)". Say it plainly: the swap is built, our vault is not whitelisted yet, and the vault uses a pre-funded float it will not over-credit.
-5. **1:30** Run `pnpm agora:check` on screen: the vault is built on the real CTK and AUSD, handles the 18-decimal CTK, and the pair refuses an unwhitelisted vault. Show `docs/AGORA_REQUEST.md`.
+4. **1:10** Details shows "Agora Instant Settlement: on". Open the deposit on the explorer: the vault's `Payout` event says `viaAgora = true`, and the CTK went through the pair `0x1Aa8958A…`.
+5. **1:30** Run `pnpm agora:check` on screen: the vault is past the pair's role gate, approved through Agora's testnet Whitelister. Say plainly that on mainnet this approval is Agora's KYC.
 
 ### Mera UX video
 
@@ -138,7 +138,7 @@ Record only after `cre workflow simulate` has passed. Say plainly what CRE does 
 2. **Problem** (25 s): 8 to 613 complaints. A student alone on a call for three hours.
 3. **Insight** (15 s): isolation is the weapon, so make family the second key.
 4. **Product** (30 s): weekly allowance, a hold the parent can stop with Face ID, Check on Arjun, Silent SOS.
-5. **Why new, why Monad** (20 s): a bank's trusted-person idea works inside one bank; Companion works across borders. Monad's precompile verifies a passkey from another continent inside the contract, and a confirmation takes about a second (median 0.54 s measured).
+5. **Why new, why Monad** (20 s): a bank's trusted-person idea works inside one bank; Companion works across borders. Monad's precompile verifies a passkey from another continent inside the contract, and a confirmation takes about a second (median 0.53 s measured).
 6. **Traction and next** (20 s): the `/traction` numbers, honestly split into real families and our own tests. Roadmap: a licensed LRS partner, mainnet, Telugu and Hindi.
 
 ---

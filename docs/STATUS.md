@@ -6,7 +6,7 @@ landing page must match one of the three lists below. Last updated after the fin
 ## Verified on Monad testnet
 
 `pnpm e2e:testnet` plays the whole scene against the live relayer and agent with fresh random keys.
-Latest run, 12 Oct 2026, on a **Quicknode** RPC: **101 checks, all passed**, vault
+Latest run, 12 Oct 2026, on a **Quicknode** RPC: **102 checks, all passed**, vault
 `0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87`. (Earlier runs, 16 beats and 86 checks, also passed.)
 Raw numbers: [`e2e-testnet.json`](e2e-testnet.json).
 
@@ -26,16 +26,17 @@ Raw numbers: [`e2e-testnet.json`](e2e-testnet.json).
 | Lock-down | `/fund`, the agent's webhooks and dev routes need their tokens and do not exist without them. Deposits need the guardian's own signature and are capped and replay-proof. |
 | Web push subscription | Only the family member's own key can subscribe a device to alerts. |
 | Pay a new person by name and phone | A name and a phone number become a payee with no address typed or shown; the same number typed two ways is the same person; a number without a country code is refused; the parent's hold card reads the name and a masked contact; a report follows the contact, so the next family typing it is held for the network's reason. |
-| Envio indexer (HyperIndex 3.14, Envio Cloud) | Live at `https://indexer.dev.hyperindex.xyz/abe6264/v1/graphql`, synced from block 70,125,515 to the chain head. Its families (20), holds (101) and SOS presses (17) match the contract's own counters. All five app and site queries are accepted (`pnpm check:envio`). `/traction` reads it and says "Envio HyperIndex". |
+| Envio indexer (HyperIndex 3.14, Envio Cloud) | Verified on the earlier vault: synced to the chain head, and its families (20), holds (101) and SOS presses (17) matched the contract's own counters. **Re-indexing the Agora vault** (from block 70,125,617) is a new deployment; until it is live the endpoint serves the earlier vault's history. All five app and site queries are accepted (`pnpm check:envio`). `/traction` reads it and says "Envio HyperIndex". |
 | Traction page family count | Families are counted as real only if our relayer has a record that they signed up themselves. Our own test families, and families the relayer has no record of (its data on the free plan is wiped at each restart), are never counted as real. Before this fix the page wrongly showed 17 real families. |
+| **Agora Instant Settlement, live** | The app's vault is now `0xF2BA20FaF5f171DcDB9E7F70a489855d170465C1` on Agora's real testnet CTK and AUSD, approved through Agora's testnet Whitelister. Every `Payout` it has emitted is `viaAgora = true` (6 of 6 when checked), including $3,000 deposits. The full live test through the deployed site passed 102 checks on this vault. The relayer's CTK came from Agora's AUSD faucet, swapped on the pair (`scripts/agora-testnet-setup.mjs`). |
 | Chainlink CRE workflow (`cre workflow simulate`, CLI 1.38.0, SDK 1.23.0) | Passes against live Monad testnet, with the agent running locally and again with the deployed agent. It read the vault (19 families, 94 holds) in two chain reads through Multicall3 (CRE allows 15 reads per run), found the open hold the test had just created, and had the agent remind the parent about it (hold 94, classified as the fake-officer scam). In the same run it returned the money on four real unanswered holds. Output saved in `docs/cre-simulation.txt`. `E2E_CRE_DEMO=1 pnpm e2e:testnet` reproduces it. |
 | Alchemy failover RPC | `pnpm check:failover` against the live Alchemy Monad testnet endpoint: with a dead primary Alchemy answers (chain 10143), with a healthy primary the primary answers, and without the fallback the dead primary fails. |
 | Alchemy webhook route (`/alchemy/webhook`) | Signature required (HMAC-SHA256 over the raw body), 503 without a key, unsigned or wrongly signed bodies refused, a hold the relayer path missed is paged once, duplicates and repeats are skipped, an already-paged SOS is skipped. `pnpm e2e` beat 12b and 5 unit tests. |
 | Chainlink CRE endpoints on the agent | `/cre/apply` and `/cre/status` answer only the CRE token, accept three actions, re-check the chain before acting (not due, not open, not yet), and the agent's own timer stays as a standby. |
 | ERC-8004 | Agent #2187 is registered under the team account. A family's guardian account records a verified save; a stranger's key, a different call, a hold nobody stopped and a repeat are all refused. |
 
-**Measured timings (live testnet, latest run, 23 confirmed transactions):** median **0.54 s**, fastest **0.28 s**,
-slowest **0.70 s**, run through the deployed site (Vercel) to the deployed relayer (Render). These are how long the relayer waited for each transaction's receipt. Use no other latency
+**Measured timings (live testnet, latest run, 23 confirmed transactions):** median **0.53 s**, fastest **0.30 s**,
+slowest **0.92 s**, run through the deployed site (Vercel) to the deployed relayer (Render). These are how long the relayer waited for each transaction's receipt. Use no other latency
 figure anywhere.
 
 **Verified live, read-only:**
@@ -59,11 +60,11 @@ and our fallback survives it. `pnpm parity` proves TypeScript and Solidity agree
 | `pnpm check:indexer` | config, schema and handlers consistent with the contracts |
 | `pnpm typecheck` | 0 errors in every package |
 | `pnpm e2e` (private local chain) | passed, every beat including the new-person and CRE beats |
-| `pnpm e2e:testnet` (live Monad testnet, Quicknode RPC) | passed, 101 checks |
+| `pnpm e2e:testnet` (live Monad testnet, Quicknode RPC) | passed, 102 checks |
 | Shared unit tests (`pnpm --filter @thunai/shared test`) | 7 passed (contact rules, same person however typed, masking) |
-| `pnpm agora:check` against the live pair | **not ready, as expected**: token and decimals handling pass; the vault is not whitelisted |
+| `pnpm agora:check` against the live pair | **ready**: the vault and the relayer are past the role gate (approved through Agora's testnet Whitelister), tokens and decimals pass |
 | Landing page production build | compiled, `/` and `/traction` |
-| Full live end-to-end through the deployed stack | `pnpm e2e:testnet` with the site's `/relayer` and `/agent` as the target: 101 checks passed, so Vercel proxying to the Render relayer and agent works for the whole scene |
+| Full live end-to-end through the deployed stack | `pnpm e2e:testnet` with the site's `/relayer` and `/agent` as the target: 102 checks passed, so Vercel proxying to the Render relayer and agent works for the whole scene |
 | Deployed site (Vercel) | `https://companion-monad.vercel.app/`, `/traction`, `/app`, a deep link and the service worker all answer 200 |
 | `scripts/serve.mjs` (relayer and agent behind one port, as on Render) | run locally: `/health` reaches the relayer, `/agent/health` reaches the agent |
 | App web export | built; the bundle has no Tamil text and no secrets or RPC keys |
@@ -91,8 +92,6 @@ The relayer and agent use a **Quicknode** endpoint (`MONAD_RPC_URL` in `.env`, n
 | **Web push delivery to a real browser** | Service worker, signed enrolment and the agent's send are built. No browser has received an alert. On iPhone it needs the app added to the Home Screen. |
 | **Every Face ID flow on a physical phone** | Run in a desktop browser and in tests with software passkeys. Not yet on one Android and one iPhone. |
 | **Silent SOS, the notes card, alerts card, session prompt and "How fast" card as screens** | They render and typecheck and the backend they call is tested, but nobody has tapped through them on a phone. |
-| **The Agora swap succeeding on the real pair** | Needs the vault whitelisted as `APPROVED_SWAPPER` and real CTK in the relayer. See `docs/AGORA_REQUEST.md`. |
-| **The Agora-ready vault `0xF2BA20FaF5f171DcDB9E7F70a489855d170465C1`** | Deployed on the real tokens; passes the token and decimals checks. Not whitelisted, and the running app does not use it. |
 | **The indexer's evidence line on a hold card, on a phone** | The query is accepted by the live indexer (`pnpm check:envio`), and the app reads it first. Not yet seen on a phone. |
 | **The LLM explanation** | The Anthropic account has no credit, so every hold used the rules' own explanation. |
 | **The ERC-8004 feedback from the app** | The relayer path is verified on testnet by the e2e. The app's background call after a stop (session signs the transaction) has not run on a phone. |
@@ -134,7 +133,7 @@ Read from the pages in the hackathon resources list, 11 Oct 2026:
 ## Honest limits (copy these into the submission)
 
 - Testnet only. The tokens are labelled stand-ins and carry no real value.
-- The Agora swap is built but switched off until Agora whitelists our vault.
+- Agora approval came from Agora's testnet self-service Whitelister (mainnet needs KYC). The swap sets no minimum output, fine at the testnet's 1:1 price, not on mainnet.
 - Face ID works in the phone's browser, not inside Expo Go.
 - It protects money held in the app, not the student's bank account. Silent SOS and Check on Arjun break the isolation instead.
 - Parent alerts reach her by WhatsApp link and by opening the app. Browser push is built but not proven on a device.

@@ -4,7 +4,7 @@
 
 *Companion* (**Thunai** in Tamil, which means "companion") is a family money agent for Indian parents with a child studying abroad.
 
-- **Every week**, it moves the allowance across borders in about a second (measured median 0.54 s on Monad testnet).
+- **Every week**, it moves the allowance across borders in about a second (measured median 0.53 s on Monad testnet).
 - **When something is wrong**, it pauses the money and pages Kavya before anything moves.
 
 Built for **Monad Metropolis** · **Track: Consumer Products & Payments** · Monad Testnet (10143)
@@ -227,8 +227,8 @@ passkey restores everything, because the family lives onchain and not on a serve
                              └──────────────────┘            ┌──────────────────────────┐
                                                              │ Agora Instant Settlement │
                                                              │ CTK -> AUSD, same tx     │
-                                                             │ (fallback: pre-funded    │
-                                                             │  float until whitelisted)│
+                                                             │ on Agora's real testnet  │
+                                                             │ CTK/AUSD pair            │
                                                              └─────────────┬────────────┘
                                                                            ▼
                                                   Arjun's spendable balance (AUSD)
@@ -427,8 +427,8 @@ under, that passkey.
    │  pager          │                             │   ScamSignals               │
    └───────┬─────────┘                             │    network reports          │
            │                                       │   Agora Instant Settlement  │
-           ▼                                       │    (swap built, switched    │
-   WhatsApp link / web push                        │     off until whitelisted)  │
+           ▼                                       │    (live: the real testnet  │
+   WhatsApp link / web push                        │     CTK/AUSD pair)          │
    to Kavya's phone                                └─────────────────────────────┘
 ```
 
@@ -611,18 +611,18 @@ The rescue has to finish **while the scammer is still on the line.**
 - The **P256 precompile at `0x0100`** (EIP-7951) verifies **a passkey from another continent
   inside the contract**. No server, no company and no scammer can override Kavya. This is the
   load-bearing one: without it, the guardian layer would be a server check.
-- **Agora Instant Settlement** is built to replace a 1–3 day SWIFT transfer with a swap that settles in the same transaction. It is switched off until Agora whitelists our vault (see Honest limits).
+- **Agora Instant Settlement** replaces a 1–3 day SWIFT transfer with a swap that settles in the same transaction. It is live on Agora's real CTK/AUSD pair on Monad testnet: every allowance and deposit in our latest run settled through it.
 
 ```
    Time from "tap" to "confirmed" on Monad testnet (measured, pnpm e2e:testnet)
 
-   fastest   0.28 s  ██████
-   median    0.54 s  ███████████
-   slowest   0.70 s  ██████████████
+   fastest   0.30 s  ██████
+   median    0.53 s  ███████████
+   slowest   0.92 s  ██████████████████
                      0       0.5      1.0      1.5 s
 ```
 
-**Measured on live Monad testnet** (`pnpm e2e:testnet`, 23 confirmed transactions): median **0.54 s**, fastest 0.28 s, slowest 0.70 s, run through the deployed site and relayer. Raw numbers are in [`docs/e2e-testnet.json`](docs/e2e-testnet.json), and the landing page lists every transaction of a recorded run with a link. No other latency figure is quoted anywhere.
+**Measured on live Monad testnet** (`pnpm e2e:testnet`, 23 confirmed transactions): median **0.53 s**, fastest 0.30 s, slowest 0.92 s, run through the deployed site and relayer. Raw numbers are in [`docs/e2e-testnet.json`](docs/e2e-testnet.json), and the landing page lists every transaction of a recorded run with a link. No other latency figure is quoted anywhere.
 
 ---
 
@@ -654,8 +654,8 @@ The rescue has to finish **while the scammer is still on the line.**
                                               └───┬────────────────┬───┘
                                    ┌──────────────▼───┐   ┌────────▼────────────┐
                                    │ ScamSignals      │   │ Agora Instant       │
-                                   │ passkey-signed   │   │ Settlement (swap    │
-                                   │ reports          │   │ built, switched off)│
+                                   │ passkey-signed   │   │ Settlement (live,   │
+                                   │ reports          │   │ real testnet pair)  │
                                    └──────────────────┘   └─────────────────────┘
 ```
 
@@ -796,16 +796,17 @@ Passkeys need a secure context, so use `https://` or `localhost`. See [`docs/DEM
 
 ## 12. Deployed addresses
 
-`contracts/deployments/10143.json` is the source of truth. Monad testnet, chain 10143.
+`contracts/deployments/10143.agora.json` is the source of truth (`THUNAI_DEPLOYMENT=agora`). Monad testnet, chain 10143.
 
 | Contract | Address |
 |---|---|
-| `ThunaiVault` (the app's vault) | `0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87` |
-| `ScamSignals` | `0xC0F7e94758975A33Bd7c1849be325734f20DA16e` |
-| Stand-in CTK (testnet) | `0xCf73DA999EE8b7B6181a32Ab95aEFE44edA10acF` |
-| Stand-in AUSD (testnet) | `0x93e068B5f92eB225A08b474f8C115C21B51520C6` |
-| Agora-ready vault (real tokens, awaiting whitelist) | `0xF2BA20FaF5f171DcDB9E7F70a489855d170465C1` |
+| `ThunaiVault` (the app's vault, Agora Instant Settlement on) | `0xF2BA20FaF5f171DcDB9E7F70a489855d170465C1` |
+| `ScamSignals` | `0x9d2a0Fbf98E9e2F3B2EE2C1A8E9525B3001614A8` |
+| CTK (Agora's testnet token, 18 decimals) | `0x7BEb5D9DB0d85cBEa543C04f0dE8c23c2176cd9D` |
+| AUSD (Agora's testnet token, 6 decimals) | `0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC` |
 | Agora CTK/AUSD pair | `0x1Aa8958Aa34cEC8096EF4381cb335effe977b0ae` |
+| Agora testnet Whitelister | `0x7c10F56d6f04a51376393a1C3670e966863F6BD5` |
+| Earlier vault on stand-in tokens (retired; the landing page's recorded run used it) | `0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87` |
 | ERC-8004 identity registry (agent **#2187**) | `0x8004A818BFB912233c491871b3d84c89A494BD9e` |
 | P256 precompile | `0x0000000000000000000000000000000000000100` |
 
@@ -839,10 +840,13 @@ serve both Mera's PRF and the contract's WebAuthn verification.
 
 Stated here rather than discovered by a judge.
 
-- **Testnet only.** The tokens are labelled stand-ins with no real value.
-- **The Agora swap is built but switched off.** It needs the `APPROVED_SWAPPER` role on our vault,
-  which Agora has not granted. Until then the vault credits AUSD from a pre-funded float, the
-  Details screen says so, and the vault refuses to credit AUSD it does not hold.
+- **Testnet only.** The money is Agora's testnet CTK and AUSD, which have no real value.
+- **The vault was approved through Agora's testnet self-service.** On testnets Agora runs a Whitelister anyone may call; on
+  mainnet, approval needs Agora's KYC. The relayer's CTK came from Agora's AUSD faucet, swapped on the pair, because Monad
+  testnet has no CTK faucet.
+- **The swap sets no minimum output.** Our vault calls the pair with `amountOutMin` 0. At the pair's fixed 1:1 testnet price
+  that is harmless (every swap returned what it put in), but a mainnet vault should take a quote from `getAmountsOut` as the
+  floor, as Agora's guide does. It would need a redeploy, so it is listed here instead.
 - **Face ID works in the phone's browser, not inside Expo Go.** React Native has no WebAuthn. The
   web build, installed to the home screen, is the mobile experience today.
 - **PRF support varies.** On desktop Chrome only passkeys saved in Google Password Manager return PRF (Mera throws `PRF_UNAVAILABLE` otherwise).

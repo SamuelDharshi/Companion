@@ -29,7 +29,7 @@ The app must have **Monad Testnet** switched on under the Alchemy app's Networks
      block {
        logs(
          filter: {
-           addresses: ["0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87"]
+           addresses: ["0xF2BA20FaF5f171DcDB9E7F70a489855d170465C1"]
            topics: [[
              "0xa6ade7bf11ac6687b3f4a170ecada2c48c184eb0aa1fc9aab5cc7aae0925134f"
              "0x4cab0cfb0e849b287d4cce61c5c4e0f33529e37adc8eedc7cb4fd6f1394daf94"
@@ -44,7 +44,7 @@ The app must have **Monad Testnet** switched on under the Alchemy app's Networks
    }
    ```
 
-   The address is `ThunaiVault`. The two topics are `HoldOpened` and `SOSRaised` (`keccak256` of their signatures; `pnpm --filter @thunai/agent test` checks them).
+   The address is `ThunaiVault`, the Agora vault the app uses. The two topics are `HoldOpened` and `SOSRaised` (`keccak256` of their signatures; `pnpm --filter @thunai/agent test` checks them).
 4. Webhook URL: `https://companion-monad.vercel.app/agent/alchemy/webhook`.
 5. Create it, then copy its **Signing Key** into `ALCHEMY_WEBHOOK_SIGNING_KEY` (Render environment, and `.env` locally).
 6. Open a hold from the app and watch the agent log for "alchemy webhook". If the relayer path got there first, the webhook is

@@ -6,7 +6,7 @@
 
 | # | Bounty | Status |
 |---|---|---|
-| 1 | [Agora, Best Cross-Border Payments App](#agora) | Entered. The Instant Settlement swap is built against the real pair and switched off until Agora whitelists our vault. |
+| 1 | [Agora, Best Cross-Border Payments App](#agora) | Entered. **Live:** every allowance and deposit settles through Agora's real CTK/AUSD pair on Monad testnet. |
 | 2 | [Mera, Best Mera-Powered UX](#mera-ux) | Entered. |
 | 3 | [Mera, One Passkey, Many Keys](#mera-many-keys) | Entered. |
 | 4 | [Best Community Team](#best-community-team) | Entered. Group: **[YOUR CAMPUS GROUP, picked on the hackathon profile]** |
@@ -81,11 +81,11 @@ The conditional logic is real and runs on Monad testnet, not in a mock:
 - The weekly allowance runs from a merkle-scheduled envelope the parent signed.
 
 Evidence: 95 Foundry tests (including a fork test against the real Agora pair), `pnpm parity` (TypeScript and Solidity agree on
-every hash), and `pnpm e2e:testnet`, which plays the whole scene on the live chain with fresh random keys: **101
-checks passed**, 23 confirmed transactions, **median 0.54 s** (fastest 0.28 s, slowest 0.70 s).
+every hash), and `pnpm e2e:testnet`, which plays the whole scene on the live chain with fresh random keys: **102
+checks passed**, 23 confirmed transactions, **median 0.53 s** (fastest 0.30 s, slowest 0.92 s).
 
-**Simulated, and disclosed:** the money is labelled stand-in tokens; "Send money now" plays the licensed remittance partner;
-the real Agora swap is off until Agora whitelists the vault.
+**Simulated, and disclosed:** the money is Agora's testnet CTK and AUSD (no real value), and "Send money now" plays the
+licensed remittance partner. The settlement itself is real: it goes through Agora's Instant Settlement pair.
 
 ### Design and invisible blockchain
 
@@ -133,17 +133,18 @@ real one is not available, and the write-up will say so.
 
 | What | Address |
 |---|---|
-| **`ThunaiVault`** (the app's vault) | [`0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87`](https://testnet.monadexplorer.com/address/0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87) |
-| `ScamSignals` | [`0xC0F7e94758975A33Bd7c1849be325734f20DA16e`](https://testnet.monadexplorer.com/address/0xC0F7e94758975A33Bd7c1849be325734f20DA16e) |
-| Stand-in CTK (labelled, no value) | [`0xCf73DA999EE8b7B6181a32Ab95aEFE44edA10acF`](https://testnet.monadexplorer.com/address/0xCf73DA999EE8b7B6181a32Ab95aEFE44edA10acF) |
-| Stand-in AUSD (labelled, no value) | [`0x93e068B5f92eB225A08b474f8C115C21B51520C6`](https://testnet.monadexplorer.com/address/0x93e068B5f92eB225A08b474f8C115C21B51520C6) |
-| **Agora-ready vault** (real CTK and AUSD, awaiting whitelist) | [`0xF2BA20FaF5f171DcDB9E7F70a489855d170465C1`](https://testnet.monadexplorer.com/address/0xF2BA20FaF5f171DcDB9E7F70a489855d170465C1) |
+| **`ThunaiVault`** (the app's vault, Agora Instant Settlement on) | [`0xF2BA20FaF5f171DcDB9E7F70a489855d170465C1`](https://testnet.monadexplorer.com/address/0xF2BA20FaF5f171DcDB9E7F70a489855d170465C1) |
+| `ScamSignals` | [`0x9d2a0Fbf98E9e2F3B2EE2C1A8E9525B3001614A8`](https://testnet.monadexplorer.com/address/0x9d2a0Fbf98E9e2F3B2EE2C1A8E9525B3001614A8) |
+| CTK (Agora's testnet token, 18 decimals) | [`0x7BEb5D9DB0d85cBEa543C04f0dE8c23c2176cd9D`](https://testnet.monadexplorer.com/address/0x7BEb5D9DB0d85cBEa543C04f0dE8c23c2176cd9D) |
+| AUSD (Agora's testnet token, 6 decimals) | [`0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC`](https://testnet.monadexplorer.com/address/0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC) |
 | Agora CTK/AUSD pair | [`0x1Aa8958Aa34cEC8096EF4381cb335effe977b0ae`](https://testnet.monadexplorer.com/address/0x1Aa8958Aa34cEC8096EF4381cb335effe977b0ae) |
+| Agora testnet Whitelister | [`0x7c10F56d6f04a51376393a1C3670e966863F6BD5`](https://testnet.monadexplorer.com/address/0x7c10F56d6f04a51376393a1C3670e966863F6BD5) |
+| Earlier vault on stand-in tokens (retired; the landing page's recorded run used it) | [`0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87`](https://testnet.monadexplorer.com/address/0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87) |
 | ERC-8004 identity registry, agent **#2187** | [`0x8004A818BFB912233c491871b3d84c89A494BD9e`](https://testnet.monadexplorer.com/address/0x8004A818BFB912233c491871b3d84c89A494BD9e) |
 | ERC-8004 reputation registry | [`0x8004B663056A597Dffe9eCcC1965A193B7388713`](https://testnet.monadexplorer.com/address/0x8004B663056A597Dffe9eCcC1965A193B7388713) |
 | P256 precompile (EIP-7951) | `0x0000000000000000000000000000000000000100` |
 
-`contracts/deployments/10143.json` is the source of truth. Explorer links are standard `/address/` URLs; we could not open them
+`contracts/deployments/10143.agora.json` is the source of truth (`THUNAI_DEPLOYMENT=agora`). Explorer links are standard `/address/` URLs; we could not open them
 from our build machine, so check one in a browser.
 
 **Live site:** https://companion-monad.vercel.app (landing page, `/traction`, and the app at `/app`).
@@ -151,7 +152,7 @@ from our build machine, so check one in a browser.
 ## What is verified, and how to check it
 
 `pnpm e2e:testnet` plays the whole scene against the live relayer and agent with fresh random keys. Latest run (12 Oct 2026):
-**101 checks passed**, 23 confirmed transactions, **median 0.54 s** (fastest 0.28 s, slowest 0.70 s). Raw numbers:
+**102 checks passed**, 23 confirmed transactions, **median 0.53 s** (fastest 0.30 s, slowest 0.92 s). Raw numbers:
 [`docs/e2e-testnet.json`](e2e-testnet.json). The landing page lists every transaction of a recorded run with a link, and
 `/traction` counts the contracts' own events live. 95 Foundry tests pass (`pnpm contracts:test`), including a fork test
 against the real Agora pair. `pnpm parity` proves TypeScript and Solidity agree on every hash.
@@ -181,31 +182,37 @@ to send AUSD to another person or across borders.*
 | Mobile app | An Expo app, one codebase and two roles, laid out for a phone. The web build runs in a phone browser and installs to the home screen. Face ID works in the browser, not inside Expo Go (see Honest limits). |
 | Passkey onboarding with Mera | One Face ID per person. No seed phrase, extension, email or OTP. [`app/src/mera/account.ts`](../app/src/mera/account.ts) |
 | An AUSD balance | The student's home screen, shown as dollars only. [`app/app/student/index.tsx`](../app/app/student/index.tsx) |
-| A completed send/receive settled instantly | The guardian's "Send money now" and the weekly allowance credit the student in one transaction; a student's payment is confirmed in the same call. In the testnet run every such call was confirmed in 0.3 to 0.7 s. |
+| A completed send/receive settled instantly | The guardian's "Send money now" and the weekly allowance credit the student in one transaction; a student's payment is confirmed in the same call. In the testnet run every such call was confirmed in 0.3 to 0.9 s. |
 
-### Stated plainly: the Agora swap is built but switched off
+### Live: Instant Settlement on the real pair
 
-The pair's swap is gated by `APPROVED_SWAPPER`, and **our vault has not been whitelisted**. Until it is, `AGORA_ENABLED=false`
-and the vault credits AUSD from a pre-funded float, which the app labels ("Settlement: pre-funded fallback while Agora
-whitelisting is pending"; Details says "Agora Instant Settlement: off (disclosed fallback)").
+Every allowance and every deposit into a family's account settles through Agora's CTK/AUSD Instant Settlement pair on Monad testnet,
+in the same transaction. The Details screen says "Agora Instant Settlement: on", read from the vault itself.
 
-What is ready, and how we know:
+**How it was turned on, using Agora's own testnet tooling** (from Agora's docs: "Executing a Swap" and "Getting Testnet Tokens"):
 
-- **`pnpm agora:check`** asks the live pair whether our vault may swap, by simulating a zero-amount swap from the vault with
-  `eth_call` and reading the pair's missing-role error. Today it reports the vault is built on the pair's real CTK and AUSD,
-  handles the CTK's 18 decimals against AUSD's 6, and is **not** whitelisted.
-- **A second vault** (`0xF2BA20Fa...`) is deployed on the real tokens and is the address to whitelist. The vault the app uses
-  is built on labelled stand-in tokens we can mint, so demos are always funded.
-- **Decimals.** The real CTK has 18 decimals and AUSD has 6. The vault keeps family money in 6-decimal dollars and converts at
-  the edge, tested with a mock pair and **against the real pair on a fork**, which also proves the real pair refuses an
-  unwhitelisted vault and that our fallback survives it instead of failing a family's deposit.
-- `_settle` wraps the swap in `try/catch`, and the vault tracks `ausdLiabilities` and refuses to credit AUSD it does not hold
-  (`UnbackedCredit`), so the fallback cannot show a balance the vault could not pay.
-- **The ready-to-paste whitelist request** is [`docs/AGORA_REQUEST.md`](AGORA_REQUEST.md). Switching to the real swap is one
-  environment setting (`THUNAI_DEPLOYMENT=agora`).
+1. **Approval.** On testnets Agora runs a **Whitelister** (`0x7c10F56d6f04a51376393a1C3670e966863F6BD5`) that anyone may call to grant `APPROVED_SWAPPER`.
+   `scripts/agora-testnet-setup.mjs` used it for our vault and our relayer. On mainnet this step is Agora's KYC instead.
+2. **Funds.** Agora's AUSD faucet funded the relayer. Monad testnet has no CTK faucet, so the relayer swapped AUSD into CTK on the
+   pair itself ([one of those swaps](https://testnet.monadexplorer.com/tx/0x235f59282f9baa071d9c0811652a41996d1bfaa466532f19eaf555dc1cf65667)). The relayer then funds families with real CTK, as a licensed remittance
+   partner would.
+3. **Switch.** `pnpm agora:check` passed (the vault is past the role gate), `pnpm agora:enable` turned the swap on
+   ([tx](https://testnet.monadexplorer.com/tx/0xa74d41207fb028551fcec60ff9b4fee0aed9f39e7fa151dd90b98ffa94c65622)), and the deployment setting `THUNAI_DEPLOYMENT=agora` pointed the live relayer, agent, indexer and
+   CRE workflow at this vault.
 
-What cannot be shown until Agora acts: a swap that **succeeds** on the real pair. We cannot mint the real CTK either
-(owner-only), so the request also asks for a little test CTK.
+**Evidence.**
+- The full live test, run through the deployed site on this vault, passed **102 checks**.
+- Every `Payout` the vault has emitted says `viaAgora = true`, including a family's $3,000 deposit settled in 0.37 s
+  ([tx](https://testnet.monadexplorer.com/tx/0x40a785df6c688bd40cf69a076e7603528ebf866a04cb385e28a963fb8c1e4cce)).
+- The pair trades at 1:1 here, and every swap returned the amount put in.
+
+**Built in, and still true.** The real CTK has 18 decimals and AUSD has 6, so the vault keeps family money in 6-decimal dollars and
+converts at the edge (tested with a mock pair, and against the real pair on a fork). `_settle` wraps the swap in `try/catch` and the
+vault refuses to credit AUSD it does not hold (`UnbackedCredit`), so a refused swap can never fail a family's deposit or show a
+balance the vault could not pay.
+
+**One honest limit.** The vault calls the pair with `amountOutMin` 0. At the testnet's fixed 1:1 price that is harmless, but a
+mainnet vault should take `getAmountsOut` as the floor, as Agora's guide does. It needs a redeploy, so it is disclosed instead.
 
 **Business viability.** A small FX and transfer spread on each allowance, the model remittance companies use. The guardian layer
 is free, and it is why families stay. A resident Indian parent never buys a token.
@@ -230,7 +237,7 @@ with low-`s` normalisation, and `challengeIndex` and `typeIndex` computed from t
 
 | The judges look at | Our answer |
 |---|---|
-| **Time to first transaction** (taps and seconds) | Measured on testnet: the parent goes from the invite link to a confirmed, signed envelope in **2 taps and 2 Face IDs**, with the transactions confirming in 0.68 s (family registered) and 0.68 s (envelope). The student needs **1 tap and 1 Face ID** to sign in; his first payment is then 2 taps, silent inside the session, confirmed in 0.28 to 0.70 s. The machine time is measured ([`docs/e2e-testnet.json`](e2e-testnet.json)); the human parts (typing a name, the Face ID prompt) have **not** been stopwatch-timed on a phone yet. |
+| **Time to first transaction** (taps and seconds) | Measured on testnet: the parent goes from the invite link to a confirmed, signed envelope in **2 taps and 2 Face IDs**, with the transactions confirming in 0.59 s (family registered) and 0.46 s (envelope). The student needs **1 tap and 1 Face ID** to sign in; his first payment is then 2 taps, silent inside the session, confirmed in 0.30 to 0.92 s. The machine time is measured ([`docs/e2e-testnet.json`](e2e-testnet.json)); the human parts (typing a name, the Face ID prompt) have **not** been stopwatch-timed on a phone yet. |
 | **Session design** | A **15-minute `thunai/acct` signing session** is scoped to routine actions and signs them with no prompt: paying an approved payee, adding money from home, subscribing a device to alerts. **Always re-prompted, by design:** a guardian's decision on a hold (stop or allow), envelope changes and unfreezing the family. A background session can never release a held payment, however recently someone tapped Face ID. |
 | **Session-expiry UX** | When the session ends, an in-place panel says "Tap Face ID to continue" with one button, and the person simply sends again. Details shows "Session active · N min". It is not an error screen. |
 | **The stateless test** | Asserted in the testnet e2e (beat 13, software passkeys): a passkey address alone finds the family, the envelope and the encrypted notes again from the chain. In the app, **Forget this device** followed by one Face ID restores the family, and **Open my notes with Face ID** reads the notes back. **Not yet shown on a physical phone.** |
@@ -435,8 +442,8 @@ tunnel for a local run, are in [`docs/DEMO.md`](DEMO.md).
 
 (Copied from [`docs/STATUS.md`](STATUS.md).)
 
-- **Testnet only.** The tokens are labelled stand-ins and carry no real value.
-- **The Agora swap is built but switched off** until Agora whitelists our vault. The vault uses a pre-funded float and says so.
+- **Testnet only.** The money is Agora's testnet CTK and AUSD, which carry no real value.
+- **Agora approval came from Agora's testnet self-service Whitelister.** On mainnet it would need Agora's KYC. The swap sets no minimum output (`amountOutMin` 0), harmless at the testnet's fixed 1:1 price but not acceptable on mainnet.
 - **Face ID works in the phone's browser, not inside Expo Go.** React Native has no WebAuthn.
 - **Not yet proven on physical phones.** Desktop browser and automated tests with software passkeys only. This includes the
   PRF-derived notes key, Silent SOS as a screen, and push delivery.
