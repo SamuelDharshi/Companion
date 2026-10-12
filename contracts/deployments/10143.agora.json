@@ -7,6 +7,6 @@
   "relayer": "0x3Ba85544C7a5C386AE7Cf753e887FB05Ac946074",
   "agent": "0x301ea090e957c28ca536ab8679EBEF2D354Febd8",
   "agoraPair": "0x1Aa8958Aa34cEC8096EF4381cb335effe977b0ae",
-  "agoraEnabled": false,
+  "agoraEnabled": true,
   "standInTokens": false
 }

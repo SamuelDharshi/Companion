@@ -46,8 +46,11 @@ services:
         sync: false
       - key: LOGS_RPC_URL
         value: https://testnet-rpc.monad.xyz
+      # The Agora-ready vault: real CTK and AUSD, Agora Instant Settlement on (contracts/deployments/10143.agora.json).
+      - key: THUNAI_DEPLOYMENT
+        value: agora
       - key: THUNAI_START_BLOCK
-        value: 70125515
+        value: 70125617
       - key: RELAYER_PRIVATE_KEY
         sync: false
       - key: AGENT_PRIVATE_KEY

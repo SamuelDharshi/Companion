@@ -1,7 +1,7 @@
 {
   "schedule": "0 */1 * * * *",
   "chainSelectorName": "monad-testnet",
-  "vaultAddress": "0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87",
+  "vaultAddress": "0xF2BA20FaF5f171DcDB9E7F70a489855d170465C1",
   "agentUrl": "https://companion-monad.vercel.app/agent",
   "maxFamilies": 25,
   "maxHolds": 25,

@@ -9,17 +9,17 @@
 name: thunai
 description: Family money agent for Indian parents with a child studying abroad
 
-# The addresses and start block are the real deployment on Monad testnet (contracts/deployments/10143.json,
+# The addresses and start block are the Agora vault on Monad testnet (contracts/deployments/10143.agora.json,
 # deploy block read from contracts/broadcast). They are written out rather than read from environment
 # variables so that Envio's hosted service, which builds from this file, needs no extra settings.
 # After a redeploy, update the three values marked "deployment".
 chains:
   - id: 10143 # Monad testnet
-    start_block: 70125515 # deployment: the block ThunaiVault was created in
+    start_block: 70125617 # deployment: the block the Agora vault was created in (10143.agora.json)
     contracts:
       - name: ThunaiVault
         address:
-          - "0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87" # deployment
+          - "0xF2BA20FaF5f171DcDB9E7F70a489855d170465C1" # deployment
         handler: src/EventHandlers.ts
         events:
           - event: FamilyRegistered(uint256 indexed familyId, address indexed studentAcct, address indexed guardianAcct)
@@ -39,7 +39,7 @@ chains:
 
       - name: ScamSignals
         address:
-          - "0xC0F7e94758975A33Bd7c1849be325734f20DA16e" # deployment: ScamSignals
+          - "0x9d2a0Fbf98E9e2F3B2EE2C1A8E9525B3001614A8" # deployment: ScamSignals
         handler: src/EventHandlers.ts
         events:
           - event: Reported(bytes32 indexed handleHash, uint8 scriptId, uint256 indexed holdId, uint256 indexed familyId, uint32 reports)

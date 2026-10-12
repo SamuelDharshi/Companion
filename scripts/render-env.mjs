@@ -49,7 +49,8 @@ const fixed = {
   TESTNET_PARTNER_STANDIN: "true",
   KEEPER_ENABLED: "true",
   LOGS_RPC_URL: local.LOGS_RPC_URL || "https://testnet-rpc.monad.xyz",
-  THUNAI_START_BLOCK: local.THUNAI_START_BLOCK || "70125515",
+  THUNAI_DEPLOYMENT: local.THUNAI_DEPLOYMENT || "agora",
+  THUNAI_START_BLOCK: local.THUNAI_START_BLOCK || "70125617",
   APP_URL: `${site}/app`,
   CORS_ORIGIN: site,
 };
