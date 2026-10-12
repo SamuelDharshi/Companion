@@ -391,6 +391,8 @@ app.post("/sos-detail", async (request) => {
  * skips anything the relayer path already paged, so a parent is not paged twice for one event.
  */
 const alchemySeen = new Set<string>();
+/** Counts only, for /health: proof that Alchemy's deliveries arrive, without exposing anything in them. */
+const alchemyStats = { accepted: 0, rejected: 0, paged: 0, skipped: 0, lastAt: 0 };
 await app.register(async (scope) => {
   // The signature covers the exact bytes Alchemy sent, so this route needs the raw body, not parsed JSON.
   scope.addContentTypeParser("application/json", { parseAs: "string" }, (_request, body, done) => done(null, body));
@@ -399,8 +401,11 @@ await app.register(async (scope) => {
     if (!env.ALCHEMY_WEBHOOK_SIGNING_KEY) return reply.code(503).send({ error: "Webhook not configured." });
     const raw = typeof request.body === "string" ? request.body : "";
     if (!signatureMatches(raw, request.headers["x-alchemy-signature"], env.ALCHEMY_WEBHOOK_SIGNING_KEY)) {
+      alchemyStats.rejected++;
       return reply.code(401).send({ error: "Bad signature." });
     }
+    alchemyStats.accepted++;
+    alchemyStats.lastAt = Date.now();
     let payload: unknown;
     try {
       payload = JSON.parse(raw);
@@ -492,6 +497,8 @@ await app.register(async (scope) => {
         skipped++;
       }
     }
+    alchemyStats.paged += paged;
+    alchemyStats.skipped += skipped;
     return { ok: true, paged, skipped };
   });
 });
@@ -613,6 +620,7 @@ app.get("/health", async () => ({
   /** Yes/no only; the URL and the signing key never leave the server. */
   rpcFailover: Boolean(env.ALCHEMY_RPC_URL),
   alchemyWebhook: Boolean(env.ALCHEMY_WEBHOOK_SIGNING_KEY),
+  alchemyDeliveries: alchemyStats,
   agentAddress: chain.account.address,
   vault: deployment.thunaiVault,
 }));
