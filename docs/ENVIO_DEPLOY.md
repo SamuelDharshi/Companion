@@ -1,6 +1,6 @@
 # Deploying the indexer on Envio's hosted service
 
-**Live:** `https://indexer.dev.hyperindex.xyz/abe6264/v1/graphql` (Envio Cloud, development plan, branch `envio`). Envio Cloud builds from the `envio` branch, not `main`:
+**Live:** `https://indexer.dev.hyperindex.xyz/228e4fb/v1/graphql`, indexing the Agora vault (Envio Cloud, development plan, branch `envio`). Envio Cloud builds from the `envio` branch, not `main`:
 every push to it re-indexes from the start block, and the free plan allows only 3 deployments per indexer. Move `envio` to a new
 commit only when the indexer itself changes.
 

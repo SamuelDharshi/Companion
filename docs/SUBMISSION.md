@@ -288,7 +288,7 @@ watching, and cannot be made to start it again. Tests: `test_DuressKeyFreezesOut
 ## Envio
 
 **Status: deployed and live.** Envio HyperIndex 3.14 on Envio Cloud, indexing Monad testnet (chain 10143) from the block the vault
-was created in (70,125,515) and following the chain head. GraphQL endpoint: `https://indexer.dev.hyperindex.xyz/abe6264/v1/graphql`.
+was created in (70,125,617, the Agora vault) and following the chain head. GraphQL endpoint: `https://indexer.dev.hyperindex.xyz/228e4fb/v1/graphql`.
 
 Asked for: *how your project meaningfully uses Envio's HyperIndex, HyperSync or HyperRPC to power real on-chain data.*
 
@@ -307,15 +307,16 @@ count, which is what raises the hold level for the next family.
   payee") from Envio first, with the same labelled fallback. The decision on a hold is never read from the indexer: it is always read
   from the contract, so an indexer delay cannot show a family a stale "safe".
 
-**Why it matters here, measured.** On the free hosting plan our relayer's own counter restarts from scratch after every redeploy and
-was 77,000 blocks behind the chain when we checked. Envio was at the chain head and counted 25 payments stopped by a parent where the
-relayer had counted 19 so far. Its totals for families (20), holds (101) and SOS presses (17) match the contract's own counters
-exactly.
+**Why it matters here, measured.** On the free hosting plan our relayer's own counter restarts from scratch after every redeploy, so
+it is often far behind the chain: on the earlier vault it was 77,000 blocks behind when we checked, and right after the switch to the
+Agora vault it showed 0 payments stopped while Envio, at the chain head, showed 4. Envio's totals match the contract's own counters
+exactly: 2 families, 14 holds and 2 SOS presses on the Agora vault (and 20, 101 and 17 on the earlier vault). It also records that all
+6 of the vault's settlements went through Agora.
 
 **Checked.**
 - `pnpm check:indexer` validates `config.yaml` against the JSON schema inside the pinned `envio` package, and every event signature
   against the compiled ABI. It catches the v2-style config that failed our first Envio build.
-- `ENVIO_GRAPHQL_URL=https://indexer.dev.hyperindex.xyz/abe6264/v1/graphql pnpm check:envio` sends every query the app and site use to the live indexer: all five are accepted.
+- `ENVIO_GRAPHQL_URL=https://indexer.dev.hyperindex.xyz/228e4fb/v1/graphql pnpm check:envio` sends every query the app and site use to the live indexer: all five are accepted.
 - `/traction` was checked live: it reads "Envio HyperIndex", and against a stand-in server it falls back and says so.
 
 **Not yet seen:** the hold card's evidence line on a physical phone.
