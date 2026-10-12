@@ -610,6 +610,9 @@ app.get("/health", async () => ({
   keeper: keeper.status(),
   orchestrator: env.ORCHESTRATOR,
   creLastSeenAt: lastCreAt || null,
+  /** Yes/no only; the URL and the signing key never leave the server. */
+  rpcFailover: Boolean(env.ALCHEMY_RPC_URL),
+  alchemyWebhook: Boolean(env.ALCHEMY_WEBHOOK_SIGNING_KEY),
   agentAddress: chain.account.address,
   vault: deployment.thunaiVault,
 }));

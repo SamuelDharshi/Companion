@@ -49,6 +49,9 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 //                      random keys (nothing reusable), waits real seconds instead of time travel, and
 //                      records the measured timings to docs/e2e-testnet.json.
 const TESTNET = process.env.E2E_TARGET === "testnet";
+// The local run deploys its own fresh contracts, so it must never pick up a named deployment (THUNAI_DEPLOYMENT=agora) from
+// the root .env: the services would look for 31337.agora.json and lose the token addresses. An empty value wins over .env.
+if (!TESTNET) process.env.THUNAI_DEPLOYMENT = "";
 
 function readDotEnv() {
   try {

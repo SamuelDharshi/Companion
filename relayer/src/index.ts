@@ -185,6 +185,8 @@ app.get("/config", async () => {
     /** Below this the relayer cannot send value (Monad's 10 MON reserve), so gas top-ups stop working. */
     relayerAboveReserve: relayerBalance > 11n * 10n ** 18n,
     syncSendSupported: chain.syncSupported() ?? null,
+    /** Whether a failover RPC (Alchemy) is configured. A yes/no only: the URL holds a key and never leaves the server. */
+    rpcFailover: Boolean(env.ALCHEMY_RPC_URL),
     vapidPublicKey: env.VAPID_PUBLIC_KEY ?? null,
     familyCount,
   });
