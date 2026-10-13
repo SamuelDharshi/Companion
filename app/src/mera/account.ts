@@ -130,6 +130,26 @@ function relyingParty(rpId: string) {
   return { id: rpId, name: DEFAULT_RP_NAME };
 }
 
+const PRF_MISSING =
+  "This browser can't make the kind of passkey Companion needs. Open Companion in Chrome or Safari on your phone.";
+
+/**
+ * Mera finds out that PRF is missing only after the creation ceremony, and the passkey it just made stays on the
+ * authenticator, unusable. Browsers with WebAuthn's getClientCapabilities() say up front whether PRF works, so ask
+ * first and never leave a dead passkey behind. Only an explicit "no" stops us: older browsers lack the call.
+ */
+async function assertPrfSupported() {
+  const credential = (globalThis as any).PublicKeyCredential;
+  if (typeof credential?.getClientCapabilities !== "function") return;
+  let capabilities: Record<string, boolean> | undefined;
+  try {
+    capabilities = await credential.getClientCapabilities();
+  } catch {
+    return;
+  }
+  if (capabilities?.["extension:prf"] === false) throw new Error(PRF_MISSING);
+}
+
 /**
  * Onboarding: one Face ID.
  *
@@ -143,6 +163,7 @@ export async function createThunaiAccount(options: {
   role: Role;
   displayName: string;
 }): Promise<{ account: ThunaiAccount; session: ActiveSession }> {
+  await assertPrfSupported();
   const client = new ThunaiWebAuthnClient(options.rpId);
   client.setSecondarySalt(salt("duress"));
 
