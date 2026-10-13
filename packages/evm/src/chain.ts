@@ -65,7 +65,15 @@ export async function createChain(config: ChainConfig, log: ChainLogger): Promis
   const urls = [config.rpcUrl, config.fallbackRpcUrl].filter((u): u is string => Boolean(u));
   const onMonad = /monad|quiknode|alchemy/i.test(config.rpcUrl);
   if (onMonad && !urls.includes(PUBLIC_MONAD_RPC)) urls.push(PUBLIC_MONAD_RPC);
-  const transport = urls.length > 1 ? fallback(urls.map((u) => http(u)), { rank: false, retryCount: 1 }) : http(config.rpcUrl);
+  const transport =
+    urls.length > 1
+      ? fallback(
+          urls.map((u) => http(u)),
+          // viem's default stops on some provider errors, such as Quicknode's -32003 "daily request limit reached". Only a
+          // contract revert is the same on every RPC; anything else (rate limit, quota, outage) tries the next one.
+          { rank: false, retryCount: 1, shouldThrow: isRevert },
+        )
+      : http(config.rpcUrl);
   const account = privateKeyToAccount(config.privateKey as Hex, { nonceManager });
 
   // Ask the node which chain it is rather than assuming Monad, so the same relayer runs
@@ -185,4 +193,10 @@ function normalize(receipt: any): TransactionReceipt {
       receipt.effectiveGasPrice != null ? toBigInt(receipt.effectiveGasPrice) : receipt.effectiveGasPrice,
     status: receipt.status === "0x1" || receipt.status === 1 || receipt.status === "success" ? "success" : "reverted",
   } as TransactionReceipt;
+}
+
+/** True only for a contract revert, which another RPC would answer the same way. */
+function isRevert(error: Error): boolean {
+  const text = `${(error as any).details ?? ""} ${error.message}`;
+  return /revert/i.test(text) && !/limit|capacity|quota|rate/i.test(text);
 }
