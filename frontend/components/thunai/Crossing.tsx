@@ -25,7 +25,7 @@ export default function Crossing() {
 
           <dl className="mt-9 grid max-w-[560px] gap-4 sm:grid-cols-3">
             {[
-              { k: "0.53 s", v: "median confirmation, measured on Monad testnet" },
+              { k: "0.50 s", v: "median confirmation, measured on Monad testnet" },
               { k: "1 Face ID", v: "for the parent to stop a payment, checked inside the contract" },
               { k: "0", v: "dollars that reach a new payee before the parent decides" },
             ].map((f) => (

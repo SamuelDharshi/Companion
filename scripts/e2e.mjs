@@ -930,11 +930,21 @@ try {
   const depositBody = { familyId: String(familyId), amount: String(partnerAmount), nonce: pd.nonce, deadline: pd.deadline };
   const strangerSig = await arjunAcct.sign({ hash: pd.digest });
   assert((await post(`${RELAYER_URL}/partner/deposit`, {}, { ...depositBody, signature: strangerSig })).status === 401, "a deposit signed by anyone but the guardian is refused");
-  const balanceBeforeDeposit = (await api(`/family/${familyId}`)).balance;
+  const familyBeforeDeposit = await api(`/family/${familyId}`);
   const deposited = await post(`${RELAYER_URL}/partner/deposit`, {}, { ...depositBody, signature: guardianSig });
   assert(deposited.ok, "the guardian's own signature deposits for her family");
   const balanceAfterDeposit = (await api(`/family/${familyId}`)).balance;
-  assert(BigInt(balanceAfterDeposit) - BigInt(balanceBeforeDeposit) === partnerAmount, "the student's balance rose by exactly that amount");
+  // On a live deployment the keeper may return an expired hold's money in the same moment, so those refunds are
+  // subtracted: whatever is left must be exactly the deposit.
+  let refundedMeanwhile = 0n;
+  for (const id of familyBeforeDeposit.openHolds ?? []) {
+    const h = await api(`/hold/${id}`);
+    if (h.statusName === "EXPIRED" || h.statusName === "CANCELLED") refundedMeanwhile += BigInt(h.amount);
+  }
+  assert(
+    BigInt(balanceAfterDeposit) - BigInt(familyBeforeDeposit.balance) - refundedMeanwhile === partnerAmount,
+    `the student's balance rose by exactly that amount${refundedMeanwhile ? " (plus a hold the keeper returned meanwhile)" : ""}`,
+  );
   assert((await post(`${RELAYER_URL}/partner/deposit`, {}, { ...depositBody, signature: guardianSig })).status === 409, "the same signed deposit cannot be replayed");
   const tooBig = await api(`/partner/digest?familyId=${familyId}&amount=${USD(5000)}`);
   const tooBigSig = await ammaAcct.sign({ hash: tooBig.digest });

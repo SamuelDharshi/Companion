@@ -6,7 +6,7 @@ event-log counting, because Alchemy's free tier allows only 10 blocks per `eth_g
 | Use | What it does | Status |
 |---|---|---|
 | **Failover RPC** | The relayer and the agent send every request to `MONAD_RPC_URL` first. If that errors, the same request is retried on Alchemy (`ALCHEMY_RPC_URL`), including the synchronous send, so one provider's outage cannot stop a rescue. | Verified: `pnpm check:failover` |
-| **Chain-driven alerts** | An Alchemy webhook watches the vault for `HoldOpened` and `SOSRaised` and calls the agent at `/alchemy/webhook`. The parent is paged even if our own relayer's call to the agent never arrived. The agent re-reads the hold from the chain, and skips anything the relayer path already paged, so nobody is paged twice. | Route built and tested with signed payloads. **Not yet verified with a real Alchemy delivery.** |
+| **Chain-driven alerts** | An Alchemy webhook watches the vault for `HoldOpened` and `SOSRaised` and calls the agent at `/alchemy/webhook`. The parent is paged even if our own relayer's call to the agent never arrived. The agent re-reads the hold from the chain, and skips anything the relayer path already paged, so nobody is paged twice. | Deliveries verified: an unfiltered Alchemy webhook delivered thousands of signed messages through the website to the deployed agent, all accepted. **The webhook filtered to our vault has not fired yet** for the events our live tests created. |
 
 ## Settings
 

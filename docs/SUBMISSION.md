@@ -12,7 +12,7 @@
 | 4 | [Best Community Team](#best-community-team) | **Only if our campus group is in the portal's list of onboarded communities.** Group: **[YOUR CAMPUS GROUP]**. If it is not listed, we do not enter. |
 | 5 | [Envio, Best Use of Envio](#envio) | Entered. HyperIndex 3 deployed on Envio Cloud, synced to the chain head, and read by `/traction` and the app. |
 | 6 | [Chainlink, Best workflow with CRE](#chainlink-cre) | Entered. `cre workflow simulate` passes against the live chain. Not deployed to the CRE network. |
-| 7 | [Alchemy, Best Projects using Alchemy](#alchemy) | Entered. Failover RPC verified; the alert webhook is built and tested, awaiting a real delivery. |
+| 7 | [Alchemy, Best Projects using Alchemy](#alchemy) | Entered. Failover RPC live and verified; webhook deliveries reach the deployed agent; the vault-filtered webhook has not fired yet. |
 
 Not entered: Dynamic and Privy (they would replace Mera as the account layer), Cleanverse (a Trust-track bounty), Nansen
 (no data for testnet addresses), Aurora (needs mainnet funds), Kuru, Perpl, Agora Trading and MetaMask (trading
@@ -81,8 +81,8 @@ The conditional logic is real and runs on Monad testnet, not in a mock:
 - The weekly allowance runs from a merkle-scheduled envelope the parent signed.
 
 Evidence: 95 Foundry tests (including a fork test against the real Agora pair), `pnpm parity` (TypeScript and Solidity agree on
-every hash), and `pnpm e2e:testnet`, which plays the whole scene on the live chain with fresh random keys: **102
-checks passed**, 23 confirmed transactions, **median 0.53 s** (fastest 0.30 s, slowest 0.92 s).
+every hash), and `pnpm e2e:testnet`, which plays the whole scene on the live chain with fresh random keys: **110
+checks passed**, 23 confirmed transactions, **median 0.50 s** (fastest 0.33 s, slowest 0.87 s).
 
 **Simulated, and disclosed:** the money is Agora's testnet CTK and AUSD (no real value), and "Send money now" plays the
 licensed remittance partner. The settlement itself is real: it goes through Agora's Instant Settlement pair.
@@ -152,7 +152,7 @@ from our build machine, so check one in a browser.
 ## What is verified, and how to check it
 
 `pnpm e2e:testnet` plays the whole scene against the live relayer and agent with fresh random keys. Latest run (12 Oct 2026):
-**102 checks passed**, 23 confirmed transactions, **median 0.53 s** (fastest 0.30 s, slowest 0.92 s). Raw numbers:
+**110 checks passed**, 23 confirmed transactions, **median 0.50 s** (fastest 0.33 s, slowest 0.87 s). Raw numbers:
 [`docs/e2e-testnet.json`](e2e-testnet.json). `/traction` lists the latest transactions with explorer links and counts the contracts' own events live. 95 Foundry tests pass (`pnpm contracts:test`), including a fork test
 against the real Agora pair. `pnpm parity` proves TypeScript and Solidity agree on every hash.
 
@@ -200,7 +200,7 @@ in the same transaction. The Details screen says "Agora Instant Settlement: on",
    CRE workflow at this vault.
 
 **Evidence.**
-- The full live test, run through the deployed site on this vault, passed **102 checks**.
+- The full live test, run through the deployed site on this vault, passed **110 checks**.
 - Every `Payout` the vault has emitted says `viaAgora = true`, including a family's $3,000 deposit settled in 0.37 s
   ([tx](https://testnet.monadexplorer.com/tx/0x40a785df6c688bd40cf69a076e7603528ebf866a04cb385e28a963fb8c1e4cce)).
 - The pair trades at 1:1 here, and every swap returned the amount put in.
@@ -236,7 +236,7 @@ with low-`s` normalisation, and `challengeIndex` and `typeIndex` computed from t
 
 | The judges look at | Our answer |
 |---|---|
-| **Time to first transaction** (taps and seconds) | Measured on testnet: the parent goes from the invite link to a confirmed, signed envelope in **2 taps and 2 Face IDs**, with the transactions confirming in 0.59 s (family registered) and 0.46 s (envelope). The student needs **1 tap and 1 Face ID** to sign in; his first payment is then 2 taps, silent inside the session, confirmed in 0.30 to 0.92 s. The machine time is measured ([`docs/e2e-testnet.json`](e2e-testnet.json)); the human parts (typing a name, the Face ID prompt) have **not** been stopwatch-timed on a phone yet. |
+| **Time to first transaction** (taps and seconds) | Measured on testnet: the parent goes from the invite link to a confirmed, signed envelope in **2 taps and 2 Face IDs**, with the transactions confirming in 0.48 s (family registered) and 0.37 s (envelope). The student needs **1 tap and 1 Face ID** to sign in; his first payment is then 2 taps, silent inside the session, confirmed in 0.33 to 0.87 s. The machine time is measured ([`docs/e2e-testnet.json`](e2e-testnet.json)); the human parts (typing a name, the Face ID prompt) have **not** been stopwatch-timed on a phone yet. |
 | **Session design** | A **15-minute `thunai/acct` signing session** is scoped to routine actions and signs them with no prompt: paying an approved payee, adding money from home, subscribing a device to alerts. **Always re-prompted, by design:** a guardian's decision on a hold (stop or allow), envelope changes and unfreezing the family. A background session can never release a held payment, however recently someone tapped Face ID. |
 | **Session-expiry UX** | When the session ends, an in-place panel says "Tap Face ID to continue" with one button, and the person simply sends again. Details shows "Session active · N min". It is not an error screen. |
 | **The stateless test** | Asserted in the testnet e2e (beat 13, software passkeys): a passkey address alone finds the family, the envelope and the encrypted notes again from the chain. In the app, **Forget this device** followed by one Face ID restores the family, and **Open my notes with Face ID** reads the notes back. **Not yet shown on a physical phone.** |
@@ -370,7 +370,7 @@ The setup guide is [`docs/ALCHEMY.md`](ALCHEMY.md).
 | Service | What it does for Companion | Status |
 |---|---|---|
 | **Monad testnet RPC, as a failover** | The relayer and agent send each request to the primary RPC first. If it errors, the same request is retried on Alchemy, including `eth_sendRawTransactionSync`, so one provider's outage cannot stop a rescue. | **Verified** against the live endpoint: `pnpm check:failover` shows Alchemy answering with the primary down, the primary answering when healthy, and failing without the fallback (so the first check really used Alchemy). |
-| **Webhooks** (custom, GraphQL) | A webhook watches the vault for `HoldOpened` and `SOSRaised` and calls the agent at `/alchemy/webhook`. The parent is paged even if our own relayer's call to the agent never arrived. | Route **built and tested** with signed payloads (`pnpm e2e` beat 12b and unit tests). **Not yet verified with a real Alchemy delivery**, which needs the webhook created in the dashboard and its signing key set. |
+| **Webhooks** (custom, GraphQL) | A webhook watches the vault for `HoldOpened` and `SOSRaised` and calls the agent at `/alchemy/webhook`. The parent is paged even if our own relayer's call to the agent never arrived. | **Delivery path verified:** an Alchemy webhook on Monad testnet delivered thousands of signed messages through the website to the deployed agent, which accepted them (signature checked) and skipped the unrelated events. **The filtered webhook (our vault's two events only) has not yet fired** for the holds and SOS our live tests created, so paging a parent from an Alchemy event is not claimed. |
 
 **Safe by construction.** The webhook route answers only a body signed with the webhook's key (HMAC-SHA256 over the exact bytes), and
 not at all without the key. It never trusts the payload for anything that matters: it re-reads the hold from the chain before paging,
@@ -454,6 +454,6 @@ tunnel for a local run, are in [`docs/DEMO.md`](DEMO.md).
   explanation.
 - **The Envio indexer runs on Envio Cloud's free development plan.** If the deployment is ever unavailable, the site falls back to the relayer's own count and says so.
 - **The CRE workflow is not deployed to the CRE network** (that needs Early Access), and CRE does not write onchain in our design (see the Chainlink section).
-- **The Alchemy webhook has not yet received a real delivery.** The failover is verified.
+- **The vault-filtered Alchemy webhook has not fired yet.** Alchemy's deliveries do reach the deployed agent (verified with an unfiltered webhook), and the failover RPC is live.
 - **Cleanverse and Aurora are not built.**
 - **The English-only app** has no Tamil UI.
