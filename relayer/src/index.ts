@@ -465,6 +465,20 @@ app.post("/payees", async (request) => {
   });
 });
 
+/**
+ * The server's own record of a family (display names, payee names, SOS room) lives on a disk that the free host wipes on every
+ * restart. The family itself is on-chain, so when the record is missing but the family exists on-chain, a minimal record is
+ * rebuilt rather than refusing the family's action.
+ */
+async function ensureRecord(familyId: string) {
+  const existing = store.getFamily(familyId);
+  if (existing) return existing;
+  const onchain = await vault.readFamily(BigInt(familyId)).catch(() => null);
+  if (!onchain) return undefined;
+  store.upsertFamily({ familyId, studentName: "Student", guardianName: "Parent", payees: [], createdAt: Date.now() });
+  return store.getFamily(familyId);
+}
+
 /** Reads a contact the way a family typed it, turning a bad one into a plain 400. */
 function contactOr400(raw: string) {
   try {
@@ -485,7 +499,7 @@ function contactOr400(raw: string) {
 app.post("/payee/resolve", async (request, reply) => {
   const body = parse(S.resolvePayeeBody, request.body);
   const familyId = String(body.familyId);
-  const family = store.getFamily(familyId);
+  const family = await ensureRecord(familyId);
   if (!family) return reply.code(404).send({ error: "No such family." });
 
   const contact = contactOr400(body.contact);
@@ -691,7 +705,7 @@ app.post("/freeze", async (request) => {
 
   let room: string | undefined;
   if (body.kind === "sos") {
-    const record = store.getFamily(String(body.familyId));
+    const record = await ensureRecord(String(body.familyId));
     if (record) {
       room = randomBytes(12).toString("hex");
       store.upsertFamily({ ...record, sos: { at: Date.now(), room } });
