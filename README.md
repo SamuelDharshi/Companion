@@ -677,13 +677,13 @@ The rescue has to finish **while the scammer is still on the line.**
 ```
    Time from "tap" to "confirmed" on Monad testnet (measured, pnpm e2e:testnet)
 
-   fastest   0.17 s  ████
+   fastest   0.24 s  █████
    median    0.47 s  █████████
-   slowest   0.85 s  █████████████████
+   slowest   0.90 s  ██████████████████
                      0       0.5      1.0      1.5 s
 ```
 
-**Measured on live Monad testnet** (`pnpm e2e:testnet`, latest run on 13 Oct 2026, 23 confirmed transactions on the Agora vault): median **0.47 s**, fastest 0.17 s, slowest 0.85 s. Raw numbers are in [`docs/e2e-testnet.json`](docs/e2e-testnet.json). No other latency figure is quoted anywhere.
+**Measured on live Monad testnet** (`pnpm e2e:testnet`, latest run on 13 Oct 2026, 23 confirmed transactions on the Agora vault): median **0.47 s**, fastest 0.24 s, slowest 0.90 s. Raw numbers are in [`docs/e2e-testnet.json`](docs/e2e-testnet.json). No other latency figure is quoted anywhere.
 
 ---
 

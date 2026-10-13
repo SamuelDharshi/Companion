@@ -82,7 +82,7 @@ The conditional logic is real and runs on Monad testnet, not in a mock:
 
 Evidence: 95 Foundry tests (including a fork test against the real Agora pair), `pnpm parity` (TypeScript and Solidity agree on
 every hash), and `pnpm e2e:testnet`, which plays the whole scene on the live chain with fresh random keys: **110
-checks passed**, 23 confirmed transactions, **median 0.47 s** (fastest 0.17 s, slowest 0.85 s).
+checks passed**, 23 confirmed transactions, **median 0.47 s** (fastest 0.24 s, slowest 0.90 s).
 
 **Simulated, and disclosed:** the money is Agora's testnet CTK and AUSD (no real value), and "Send money now" plays the
 licensed remittance partner. The settlement itself is real: it goes through Agora's Instant Settlement pair.
@@ -152,7 +152,7 @@ from our build machine, so check one in a browser.
 ## What is verified, and how to check it
 
 `pnpm e2e:testnet` plays the whole scene against the live relayer and agent with fresh random keys. Latest run (13 Oct 2026, Agora vault):
-**110 checks passed**, 23 confirmed transactions, **median 0.47 s** (fastest 0.17 s, slowest 0.85 s). Raw numbers:
+**110 checks passed**, 23 confirmed transactions, **median 0.47 s** (fastest 0.24 s, slowest 0.90 s). Raw numbers:
 [`docs/e2e-testnet.json`](e2e-testnet.json). The app's **Our network** screen counts the contracts' own events live. 95 Foundry tests pass (`pnpm contracts:test`), including a fork test
 against the real Agora pair. `pnpm parity` proves TypeScript and Solidity agree on every hash.
 

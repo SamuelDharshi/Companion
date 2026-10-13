@@ -34,8 +34,8 @@ Raw numbers: [`e2e-testnet.json`](e2e-testnet.json).
 | Chainlink CRE endpoints on the agent | `/cre/apply` and `/cre/status` answer only the CRE token, accept three actions, re-check the chain before acting (not due, not open, not yet), and the agent's own timer stays as a standby. |
 | ERC-8004 | Agent #2187 is registered under the team account. A family's guardian account records a verified save; a stranger's key, a different call, a hold nobody stopped and a repeat are all refused. |
 
-**Measured timings (live testnet, latest run, 23 confirmed transactions):** median **0.47 s**, fastest **0.17 s**,
-slowest **0.85 s** (13 Oct 2026, `docs/e2e-testnet.json`). An earlier run the same day, through the deployed site, measured a median of
+**Measured timings (live testnet, latest run, 23 confirmed transactions):** median **0.47 s**, fastest **0.24 s**,
+slowest **0.90 s** (13 Oct 2026, through the deployed site, on Monad's public RPC; `docs/e2e-testnet.json`). An earlier run the same day, through the deployed site, measured a median of
 0.50 s. These are how long the relayer waited for each transaction's receipt. Use no other latency
 figure anywhere.
 
