@@ -68,3 +68,6 @@ cre/**/dist/
 # CRE compile artefacts
 cre/**/.cre_build_tmp.js
 cre/**/*.wasm
+
+# Captures for the demo video (not part of the code)
+video-assets/
