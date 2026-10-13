@@ -72,6 +72,11 @@ export default function GuardianHome() {
 
   async function onSend() {
     if (!device.familyId || !family) return;
+    // The vault refuses deposits while the family is paused, so say why instead of sending a doomed request.
+    if (family.frozen) {
+      setActionError(`Money is paused because ${studentName} pressed SOS. Tap "Lift the pause" below first, then send.`);
+      return;
+    }
     setBusy("send");
     setActionError(undefined);
     try {
