@@ -10,10 +10,10 @@ config, schema and handlers agree with the compiled contracts.
 
 ## What is already done
 
-- `indexer/config.yaml` points at Monad testnet (`10143`), the deployed `ThunaiVault`
-  (`0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87`) and `ScamSignals`
-  (`0xC0F7e94758975A33Bd7c1849be325734f20DA16e`), with `start_block: 70125515`, the block the vault
-  was created in. Addresses are written out, not read from environment variables, so the hosted
+- `indexer/config.yaml` points at Monad testnet (`10143`), the Agora vault `ThunaiVault`
+  (`0xF2BA20FaF5f171DcDB9E7F70a489855d170465C1`) and `ScamSignals`
+  (`0x9d2a0Fbf98E9e2F3B2EE2C1A8E9525B3001614A8`), with `start_block: 70125617`, the block the vault
+  was created in (`contracts/deployments/10143.agora.json`). Addresses are written out, not read from environment variables, so the hosted
   build needs no settings.
 - It indexes every vault event, including the new `SOSRaised` and `NotesStored`.
 - The schema keeps its derived entities (`Family` with `holds`, `payouts`, `checks`, `withdrawals` and
@@ -25,7 +25,7 @@ config, schema and handlers agree with the compiled contracts.
 2. Go to **envio.dev**, sign in with GitHub, and choose **Add Indexer**.
 3. Pick the repository and set the **root directory** to `indexer`.
 4. Branch: the one you pushed. Config file: `config.yaml`. Leave the environment variables empty.
-5. Deploy. Wait for it to sync from block `70125515` to the head; the dashboard shows progress.
+5. Deploy. Wait for it to sync from block `70125617` to the head; the dashboard shows progress.
 6. Open the deployment's **GraphQL endpoint** (the dashboard shows it).
    Test it in the playground with:
    ```graphql

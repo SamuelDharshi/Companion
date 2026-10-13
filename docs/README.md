@@ -9,6 +9,7 @@ Every guide in one place. Start with the first three; the rest are for a specifi
 | [`../README.md`](../README.md) | The product: the idea, how it works (with diagrams), how to use it, architecture, honest limits |
 | [`SUBMISSION.md`](SUBMISSION.md) | The hackathon submission: the track's five criteria, and one section per bounty answering its exact questions |
 | [`STATUS.md`](STATUS.md) | The source of truth: what is verified, what is built but unverified, what is not done. Every claim elsewhere must match it |
+| [`../FEEDBACK.md`](../FEEDBACK.md) | Feedback for Monad and every sponsor we used: one real pain point each, its root cause, our fix, and a proposed fix |
 
 ## Live links
 
@@ -19,6 +20,8 @@ Every guide in one place. Start with the first three; the rest are for a specifi
 | Relayer and agent (Render) | https://companion-api-27cv.onrender.com (`/health`, `/agent/health`) |
 | Envio GraphQL | https://indexer.dev.hyperindex.xyz/228e4fb/v1/graphql |
 | Code | https://github.com/SamuelDharshi/Companion |
+| Videos (demo, pitch, one per bounty) | https://youtube.com/playlist?list=PLY0VC16z_Ksc |
+| Landing page screenshots | [`images/`](images) |
 
 ## By sponsor
 

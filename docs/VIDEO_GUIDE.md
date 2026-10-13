@@ -123,7 +123,15 @@ If the terminal says you're logged out, run `cre login` first.
 
 ---
 
-## 7. Alchemy: not recommended now
+## 7. Alchemy (recorded: https://www.youtube.com/watch?v=LXvLZYBDr5I, 1:40)
 
-Alchemy's free monthly quota is used up, so the failover can't be shown working (the app falls back to Monad's public RPC instead),
-and the vault-filtered webhook has not fired. Skip this bounty unless you create a new Alchemy account with fresh quota.
+**What proves Alchemy is used:** the failover RPC in `packages/evm/src/chain.ts` (`pnpm check:failover` kills the primary and Alchemy
+answers) and the vault-filtered, HMAC-checked webhook in `agent/src/alchemy.ts` (`pnpm --filter @thunai/agent test`). The agent's
+`/health` reports `rpcFailover` and `alchemyWebhook`. If the Alchemy key's monthly quota is used up, create a new key and set
+`ALCHEMY_RPC_URL` on Render before showing the failover live.
+
+## Recorded videos
+
+The playlist: https://youtube.com/playlist?list=PLY0VC16z_Ksc. Main demo `5s3EPyhwbrY` (2:50), pitch `B35gSEIRm5c` (2:42), short
+demo `b9HSHEB9pic` (1:41), Agora `DQsAm-ra4RA` (1:44), Mera UX `bWgm_qVfN2k` (1:21), Mera keys `SQwHv-2Vxnc` (1:10), CRE
+`daIYA_BimC0` (1:18), Envio `Zd7OxzkSmko` (1:10), Alchemy `LXvLZYBDr5I` (1:40). All within their limits.

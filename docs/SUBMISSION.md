@@ -82,7 +82,7 @@ The conditional logic is real and runs on Monad testnet, not in a mock:
 
 Evidence: 95 Foundry tests (including a fork test against the real Agora pair), `pnpm parity` (TypeScript and Solidity agree on
 every hash), and `pnpm e2e:testnet`, which plays the whole scene on the live chain with fresh random keys: **110
-checks passed**, 23 confirmed transactions, **median 0.50 s** (fastest 0.33 s, slowest 0.87 s).
+checks passed**, 23 confirmed transactions, **median 0.47 s** (fastest 0.17 s, slowest 0.85 s).
 
 **Simulated, and disclosed:** the money is Agora's testnet CTK and AUSD (no real value), and "Send money now" plays the
 licensed remittance partner. The settlement itself is real: it goes through Agora's Instant Settlement pair.
@@ -139,7 +139,7 @@ real one is not available, and the write-up will say so.
 | AUSD (Agora's testnet token, 6 decimals) | [`0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC`](https://testnet.monadexplorer.com/address/0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC) |
 | Agora CTK/AUSD pair | [`0x1Aa8958Aa34cEC8096EF4381cb335effe977b0ae`](https://testnet.monadexplorer.com/address/0x1Aa8958Aa34cEC8096EF4381cb335effe977b0ae) |
 | Agora testnet Whitelister | [`0x7c10F56d6f04a51376393a1C3670e966863F6BD5`](https://testnet.monadexplorer.com/address/0x7c10F56d6f04a51376393a1C3670e966863F6BD5) |
-| Earlier vault on stand-in tokens (retired; the landing page's recorded run used it) | [`0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87`](https://testnet.monadexplorer.com/address/0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87) |
+| Earlier vault on stand-in tokens (retired, no longer used) | [`0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87`](https://testnet.monadexplorer.com/address/0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87) |
 | ERC-8004 identity registry, agent **#2187** | [`0x8004A818BFB912233c491871b3d84c89A494BD9e`](https://testnet.monadexplorer.com/address/0x8004A818BFB912233c491871b3d84c89A494BD9e) |
 | ERC-8004 reputation registry | [`0x8004B663056A597Dffe9eCcC1965A193B7388713`](https://testnet.monadexplorer.com/address/0x8004B663056A597Dffe9eCcC1965A193B7388713) |
 | P256 precompile (EIP-7951) | `0x0000000000000000000000000000000000000100` |
@@ -151,8 +151,8 @@ from our build machine, so check one in a browser.
 
 ## What is verified, and how to check it
 
-`pnpm e2e:testnet` plays the whole scene against the live relayer and agent with fresh random keys. Latest run (12 Oct 2026):
-**110 checks passed**, 23 confirmed transactions, **median 0.50 s** (fastest 0.33 s, slowest 0.87 s). Raw numbers:
+`pnpm e2e:testnet` plays the whole scene against the live relayer and agent with fresh random keys. Latest run (13 Oct 2026, Agora vault):
+**110 checks passed**, 23 confirmed transactions, **median 0.47 s** (fastest 0.17 s, slowest 0.85 s). Raw numbers:
 [`docs/e2e-testnet.json`](e2e-testnet.json). The app's **Our network** screen counts the contracts' own events live. 95 Foundry tests pass (`pnpm contracts:test`), including a fork test
 against the real Agora pair. `pnpm parity` proves TypeScript and Solidity agree on every hash.
 
@@ -411,8 +411,8 @@ The group is selected on our hackathon profile. Nothing else in this repository 
 
 ## Judge instructions
 
-**Fastest look, no passkeys needed:** open https://companion-monad.vercel.app. Its phone screens come from a recorded run of a
-fictional family on testnet, and the app's **Our network** screen shows live counts from the chain. This is the
+**Fastest look, no passkeys needed:** open https://companion-monad.vercel.app. Its phone screens come from a real run on the live vault
+(family 15, every step with a transaction hash in `frontend/data/demo.json`), and the app's **Our network** screen shows live counts from the chain. This is the
 read-only view.
 
 **The full two-device flow (about two minutes).** Open https://companion-monad.vercel.app/app on two devices, or in two browser

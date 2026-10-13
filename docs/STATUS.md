@@ -6,8 +6,8 @@ landing page must match one of the three lists below. Last updated after the fin
 ## Verified on Monad testnet
 
 `pnpm e2e:testnet` plays the whole scene against the live relayer and agent with fresh random keys.
-Latest run, 12 Oct 2026, on a **Quicknode** RPC: **110 checks, all passed**, vault
-`0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87`. (Earlier runs, 16 beats and 86 checks, also passed.)
+Latest run, 13 Oct 2026: **110 checks, all passed**, on the Agora vault
+`0xF2BA20FaF5f171DcDB9E7F70a489855d170465C1`. (Earlier runs on the retired vault `0x3aC3…CF87`, 86 and 110 checks, also passed.)
 Raw numbers: [`e2e-testnet.json`](e2e-testnet.json).
 
 | Capability | What the run proves |
@@ -34,8 +34,9 @@ Raw numbers: [`e2e-testnet.json`](e2e-testnet.json).
 | Chainlink CRE endpoints on the agent | `/cre/apply` and `/cre/status` answer only the CRE token, accept three actions, re-check the chain before acting (not due, not open, not yet), and the agent's own timer stays as a standby. |
 | ERC-8004 | Agent #2187 is registered under the team account. A family's guardian account records a verified save; a stranger's key, a different call, a hold nobody stopped and a repeat are all refused. |
 
-**Measured timings (live testnet, latest run, 23 confirmed transactions):** median **0.50 s**, fastest **0.33 s**,
-slowest **0.87 s**, run through the deployed site (Vercel) to the deployed relayer (Render). These are how long the relayer waited for each transaction's receipt. Use no other latency
+**Measured timings (live testnet, latest run, 23 confirmed transactions):** median **0.47 s**, fastest **0.17 s**,
+slowest **0.85 s** (13 Oct 2026, `docs/e2e-testnet.json`). An earlier run the same day, through the deployed site, measured a median of
+0.50 s. These are how long the relayer waited for each transaction's receipt. Use no other latency
 figure anywhere.
 
 **Verified live, read-only:**
@@ -81,10 +82,18 @@ The relayer and agent use a **Quicknode** endpoint (`MONAD_RPC_URL` in `.env`, n
 **5-block range**, so the relayer's event counting reads logs from the public RPC through a separate setting,
 `LOGS_RPC_URL`. If you change the main RPC and its log range is small, set `LOGS_RPC_URL` too.
 
+### Fixed and verified on 13 Oct 2026
+
+| What | Evidence |
+|---|---|
+| **RPC failover on a rate limit** | On 13 Oct 2026 Quicknode answered "daily request limit reached" with code -32003, which viem's fallback treated as final, and the Render service crash-looped. `packages/evm/src/chain.ts` now stops the fallback only on a contract revert. Checked against a fake RPC returning that exact error: the request fell through to Monad's public RPC (chain 10143). Render was healthy within a minute of the push (commit `b78a3e3`). |
+| **The landing page's run** | Re-recorded on 13 Oct 2026 on the live Agora vault: family 15, 11 transactions, each with its hash in `frontend/data/demo.json`; the CTK to AUSD deposit's receipt includes a log from the Agora pair. Steps took 0.8 to 1.3 s measured from India against Monad's public RPC. |
+
 ## Built but unverified
 
 | Thing | Why it is unverified |
 |---|---|
+| **The PRF check before sign-up** | `assertPrfSupported()` in `app/src/mera/account.ts` asks `PublicKeyCredential.getClientCapabilities()` and stops before the ceremony if the browser says PRF is unsupported, so no unusable passkey is created. Typechecks; not yet seen on a browser that reports no PRF. |
 | **The Chainlink CRE workflow on the CRE network** | Not deployed: that needs CRE Early Access approval. The simulation itself is verified (see above). CRE does not write onchain in our design. |
 | **The notes key from a real passkey (PRF)** | The e2e uses a deterministic stand-in for the authenticator's PRF output, because a script cannot do WebAuthn PRF. The encryption, storage and read-back are real. `getPasskeyPrfOutput` with the `thunai/notes` salt is written and typechecks, but has not run on a phone. |
 | **The Alchemy webhook, filtered to our vault** | Alchemy's deliveries reach the deployed agent: an unfiltered webhook delivered thousands of signed messages through the website, all accepted (signature checked) and the unrelated events skipped. The webhook filtered to the vault's `HoldOpened` and `SOSRaised` has not fired for the events our live tests created; the cause (the query's filter syntax, or Alchemy on Monad testnet) is not yet known. |
@@ -103,8 +112,7 @@ The relayer and agent use a **Quicknode** endpoint (`MONAD_RPC_URL` in `.env`, n
 | **Aurora Intents** | **Skipped, by decision.** Aurora's docs list Monad as supported for source and destination but never mention a testnet, anywhere (checked the docs index and the Intents Connect, Deposits and Swap chain pages). Only a mainnet flow is documented, which would need real funds and our contracts on mainnet, so nothing was built and nothing was spent. If Aurora's team confirms testnet support, Phase 8 can be picked up with a 3-hour time box. |
 | **A keep-alive monitor for the free Render service** | The relayer and agent run on Render's free plan at `https://companion-api-27cv.onrender.com`, which sleeps after 15 minutes without requests. Until a free pinger (UptimeRobot) hits `/health` every 5 minutes, the keeper is not guaranteed to run. No disk: display names, masked contacts, push subscriptions and pending invites are lost on a restart or redeploy. |
 | **The repository shared with the organisers** | It is public at `github.com/SamuelDharshi/Companion`; share it with `metropolis@hackathon.monad.xyz` if it is made private. |
-| **CRE video** | Yours to record; script in `docs/DEMO.md`. |
-| **Logo, demo video, pitch video** | Yours to produce; the scripts are in `docs/DEMO.md`. |
+| **Videos** | Done: the playlist https://youtube.com/playlist?list=PLY0VC16z_Ksc has the demo, the pitch and one video per bounty, each within its limit. |
 | **A native app** | Face ID works in the phone's browser, not in Expo Go. |
 | **Real families** | None yet on the new vault. Every family so far is our own test run. |
 
