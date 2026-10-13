@@ -535,7 +535,7 @@ Open on two devices (or two browsers).
 4. **Device 2.** Open the hold. Tap **Stop it**. Device 1 shows the money back in about a second.
 5. **Device 1.** Tap **Someone is asking me for money**. Device 2 shows the pause and a video call.
 6. **Device 2.** Tap **Check on Arjun**. Device 1 answers with one Face ID.
-7. Open **Our network** or `/traction` and see the same actions counted from the chain.
+7. Open **Our network** in the app and see the same actions counted from the chain (by Envio).
 
 Passkeys need a secure context, so use `https://` or `localhost`. See
 [`docs/DEMO.md`](docs/DEMO.md) for a three-minute script, the tunnel, and the second-device setup.
@@ -624,7 +624,7 @@ The rescue has to finish **while the scammer is still on the line.**
                      0       0.5      1.0      1.5 s
 ```
 
-**Measured on live Monad testnet** (`pnpm e2e:testnet`, 23 confirmed transactions): median **0.50 s**, fastest 0.33 s, slowest 0.87 s, run through the deployed site and relayer. Raw numbers are in [`docs/e2e-testnet.json`](docs/e2e-testnet.json), and the traction page lists the latest transactions with explorer links. No other latency figure is quoted anywhere.
+**Measured on live Monad testnet** (`pnpm e2e:testnet`, 23 confirmed transactions): median **0.50 s**, fastest 0.33 s, slowest 0.87 s, run through the deployed site and relayer. Raw numbers are in [`docs/e2e-testnet.json`](docs/e2e-testnet.json). No other latency figure is quoted anywhere.
 
 ---
 
@@ -669,7 +669,7 @@ The app reads the contract and the relayer directly. There is no indexer in the 
 | [`relayer/`](relayer) | Gas sponsorship, `eth_sendRawTransactionSync`, intent API |
 | [`agent/`](agent) | Allowance runner, keeper, classifier, pager |
 | [`cre/`](cre) | A Chainlink CRE workflow that reads the vault on Monad testnet and drives the allowance and the unanswered holds through the agent. `cre workflow simulate` passes against the live chain; output in [`docs/cre-simulation.txt`](docs/cre-simulation.txt). Not deployed to the CRE network. |
-| [`indexer/`](indexer) | The Envio HyperIndex 3 indexer (config, schema with derived entities, handlers). **Live on Envio Cloud**; `/traction` and the app read it. |
+| [`indexer/`](indexer) | The Envio HyperIndex 3 indexer (config, schema with derived entities, handlers). **Live on Envio Cloud**; the app read it. |
 | [`app/`](app) | Expo app — both roles, every screen |
 | [`frontend/`](frontend) | The landing page (Next.js). Its numbers come from a recorded run on testnet. |
 | [`packages/shared`](packages/shared) | Chain config, ABIs, action hashes, merkle trees, copy-safe money formatting |
@@ -740,7 +740,6 @@ steps, including tunnelling for a phone test.
 
 ```
    https://<site>/            the landing page
-   https://<site>/traction    live counts from the chain
    https://<site>/app         the Companion app (an Expo web build served as static files)
    https://<site>/relayer/*   proxied to the relayer
    https://<site>/agent/*     proxied to the agent
@@ -828,7 +827,7 @@ word on their screens.
 
 [Alchemy](docs/SUBMISSION.md#alchemy): a failover RPC (verified) and a webhook that pages the parent from the chain itself (deliveries reach the app; the vault-filtered webhook has not fired yet).
 
-[Envio](docs/SUBMISSION.md#envio): the indexer is live on Envio Cloud, and the traction page and the app read it.
+[Envio](docs/SUBMISSION.md#envio): the indexer is live on Envio Cloud, and the app's network screen and hold cards read it.
 
 Not entered: Dynamic and Privy (they would replace Mera as the account layer), Cleanverse, Nansen, Aurora, Kuru, Perpl, Agora
 Trading, MetaMask and Hunyuan. [`docs/STATUS.md`](docs/STATUS.md) lists exactly what is verified, unverified and not done.
@@ -868,7 +867,7 @@ Stated here rather than discovered by a judge.
   tested, but with a stand-in for the authenticator's PRF output.
 - **Nothing on the landing page is invented.** Every figure is from a recorded run with a transaction
   hash. The family in that run is fictional.
-- **No real families yet.** The traction page reports zero real families and separates our own test runs.
+- **No real families yet.** Every family so far is our own test run.
 
 ---
 

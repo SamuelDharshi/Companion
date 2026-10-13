@@ -16,7 +16,6 @@ Every guide in one place. Start with the first three; the rest are for a specifi
 |---|---|
 | Website (landing page) | https://companion-monad.vercel.app |
 | The app | https://companion-monad.vercel.app/app |
-| Traction (live counts from Envio) | https://companion-monad.vercel.app/traction |
 | Relayer and agent (Render) | https://companion-api-27cv.onrender.com (`/health`, `/agent/health`) |
 | Envio GraphQL | https://indexer.dev.hyperindex.xyz/228e4fb/v1/graphql |
 | Code | https://github.com/SamuelDharshi/Companion |
@@ -27,7 +26,7 @@ Every guide in one place. Start with the first three; the rest are for a specifi
 |---|---|---|
 | **Agora** (Instant Settlement) | [`AGORA.md`](AGORA.md) | `contracts/src/ThunaiVault.sol` (`_settle`), `scripts/agora-testnet-setup.mjs`, `scripts/agora-check.mjs` |
 | **Mera** (passkeys, three keys) | [`SUBMISSION.md` → Mera UX](SUBMISSION.md#mera-ux), [Many Keys](SUBMISSION.md#mera-many-keys) | `app/src/mera/account.ts`, `app/src/mera/webauthn.ts`, `packages/shared/src/notes.ts` |
-| **Envio** (indexer) | [`ENVIO_DEPLOY.md`](ENVIO_DEPLOY.md) | `indexer/config.yaml`, `indexer/schema.graphql`, `indexer/src/EventHandlers.ts`, `frontend/app/traction/page.tsx`, `app/src/network.ts` |
+| **Envio** (indexer) | [`ENVIO_DEPLOY.md`](ENVIO_DEPLOY.md) | `indexer/config.yaml`, `indexer/schema.graphql`, `indexer/src/EventHandlers.ts`, `app/src/network.ts` |
 | **Chainlink** (CRE workflow) | [`../cre/README.md`](../cre/README.md), output in [`cre-simulation.txt`](cre-simulation.txt) | `cre/companion-orchestrator/main.ts`, agent `/cre/apply` in `agent/src/index.ts` |
 | **Alchemy** (failover, webhook) | [`ALCHEMY.md`](ALCHEMY.md) | `packages/evm/src/chain.ts` (failover), `agent/src/alchemy.ts` (webhook) |
 
@@ -75,10 +74,10 @@ pnpm web:dev                  # the website with the app at /app, on http://loca
 | Folder | What is in it |
 |---|---|
 | `contracts/` | `ThunaiVault.sol` (balances, envelopes, holds, SOS, notes, Agora settlement), `ScamSignals.sol` (network reports), tests, deploy script, `deployments/` |
-| `relayer/` | Pays gas, carries signed intents, pays a person by name and phone (`/payee/resolve`), counts events for traction |
+| `relayer/` | Pays gas, carries signed intents, pays a person by name and phone (`/payee/resolve`), counts the contracts' events (`/stats`) |
 | `agent/` | Allowance keeper, hold classifier and pager, CRE endpoints, Alchemy webhook |
 | `app/` | The Expo app, both roles: student and parent |
-| `frontend/` | The website: landing page (with the 3D globe), `/traction`, and the app served at `/app` |
+| `frontend/` | The website: landing page (with the 3D globe), and the app served at `/app` |
 | `indexer/` | Envio HyperIndex 3 |
 | `cre/` | Chainlink CRE workflow |
 | `packages/shared`, `packages/evm` | Code shared by all of the above: ABIs, hashes, notes encryption, payee rules, chain client |

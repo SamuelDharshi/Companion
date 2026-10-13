@@ -50,7 +50,7 @@ If these pass, the product works. The phones are only there to make it visible.
 | 1:40 | **Silent SOS** | Arjun taps **Someone is asking me for money**. His money pauses, Kavya's screen shows the SOS with **Video call Arjun now**. Line: *"It works for gift cards and Zelle too, because it breaks the isolation."* |
 | 2:05 | Check on Arjun | Play a cloned voice: "Kavya, I've been arrested." She taps **Check on Arjun**, and the screen says "Don't send money to anyone until this shows a signature." His phone answers. Line: *"A voice can be cloned. A passkey can't."* |
 | 2:25 | Stateless | Details, **Forget this device**, one Face ID, everything is back, including the private notes. |
-| 2:40 | Close | `/traction`: live counts and real transactions with explorer links. *"Companion: family is your second key."* |
+| 2:40 | Close | The app's **Our network** screen: live counts from the chain (Envio). *"Companion: family is your second key."* |
 
 ### Lines to say exactly
 
@@ -108,7 +108,7 @@ submission: included, not deployed.
 
 1. **0:00** The Envio dashboard (or `config.yaml` and `schema.graphql`): network 10143, our vault address, every event, the derived entities.
 2. **0:30** The GraphQL playground: query the holds and the network-wide aggregates.
-3. **1:00** In the app, send a payment that opens a hold. The `/traction` counters move, and a hold card shows another family's report, both read from Envio.
+3. **1:00** In the app, send a payment that opens a hold. The **Our network** counters move, and a hold card shows another family's report, both read from Envio.
 4. **1:40** Stop the endpoint (or point the app at a bad URL): the screens fall back to the relayer's count and name the source.
 
 ### Alchemy video
@@ -139,7 +139,7 @@ Record only after `cre workflow simulate` has passed. Say plainly what CRE does 
 3. **Insight** (15 s): isolation is the weapon, so make family the second key.
 4. **Product** (30 s): weekly allowance, a hold the parent can stop with Face ID, Check on Arjun, Silent SOS.
 5. **Why new, why Monad** (20 s): a bank's trusted-person idea works inside one bank; Companion works across borders. Monad's precompile verifies a passkey from another continent inside the contract, and a confirmation takes about a second (median 0.50 s measured).
-6. **Traction and next** (20 s): the `/traction` numbers, honestly split into real families and our own tests. Roadmap: a licensed LRS partner, mainnet, Telugu and Hindi.
+6. **Traction and next** (20 s): the **Our network** numbers, and honestly: no real families yet, only our own tests. Roadmap: a licensed LRS partner, mainnet, Telugu and Hindi.
 
 ---
 

@@ -2,7 +2,6 @@
 
 ```
 https://companion-monad.vercel.app/            the landing page          (Vercel)
-https://companion-monad.vercel.app/traction    live counts from the chain (Vercel, reads the relayer)
 https://companion-monad.vercel.app/app         the Companion app          (Vercel, an Expo web export)
 https://companion-monad.vercel.app/relayer/*   proxied to the API service (Render)
 https://companion-monad.vercel.app/agent/*     proxied to the API service (Render), under /agent
@@ -95,6 +94,6 @@ the accounts of the deployed site.
 
 ## Status
 
-Verified: the site is live on Vercel, `/`, `/traction`, `/app`, a deep link (`/app/hold/3`) and the service worker
+Verified: the site is live on Vercel, `/`, `/app`, a deep link (`/app/hold/3`) and the service worker
 (`/app/sw.js`) all answer. `scripts/serve.mjs` was run locally: `/health` reaches the relayer, `/agent/health` reaches the
 agent. The Render service itself has not been created yet; see STATUS.md.

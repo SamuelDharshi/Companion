@@ -10,7 +10,7 @@
 | 2 | [Mera, Best Mera-Powered UX](#mera-ux) | Entered. |
 | 3 | [Mera, One Passkey, Many Keys](#mera-many-keys) | Entered. |
 | 4 | [Best Community Team](#best-community-team) | **Only if our campus group is in the portal's list of onboarded communities.** Group: **[YOUR CAMPUS GROUP]**. If it is not listed, we do not enter. |
-| 5 | [Envio, Best Use of Envio](#envio) | Entered. HyperIndex 3 deployed on Envio Cloud, synced to the chain head, and read by `/traction` and the app. |
+| 5 | [Envio, Best Use of Envio](#envio) | Entered. HyperIndex 3 deployed on Envio Cloud, synced to the chain head, and read by the app. |
 | 6 | [Chainlink, Best workflow with CRE](#chainlink-cre) | Entered. `cre workflow simulate` passes against the live chain. Not deployed to the CRE network. |
 | 7 | [Alchemy, Best Projects using Alchemy](#alchemy) | Entered. Failover RPC live and verified; webhook deliveries reach the deployed agent; the vault-filtered webhook has not fired yet. |
 
@@ -111,11 +111,11 @@ can reach through our own campus and alumni networks.
 
 ### Traction and the next 100 users
 
-Honest state: **zero real families so far.** `/traction` reports 0 real families and separates our own test runs, and the
+Honest state: **zero real families so far.** every family so far is our own test run, and the
 number will move on its own as drills happen.
 
 **This week.** Five to ten real parent-and-student pairs, each running a two-minute drill: the student sends a test "bond",
-the parent stops it. The median time to stop comes from the chain, not from us, and appears on `/traction`. One quote from a
+the parent stops it. The median time to stop comes from the chain, not from us, and appears in the app's **Our network** screen. One quote from a
 parent and one from a student, and a list of what confused them, which we fix and report. A teammate may play the parent when a
 real one is not available, and the write-up will say so.
 
@@ -147,13 +147,13 @@ real one is not available, and the write-up will say so.
 `contracts/deployments/10143.agora.json` is the source of truth (`THUNAI_DEPLOYMENT=agora`). Explorer links are standard `/address/` URLs; we could not open them
 from our build machine, so check one in a browser.
 
-**Live site:** https://companion-monad.vercel.app (landing page, `/traction`, and the app at `/app`).
+**Live site:** https://companion-monad.vercel.app (landing page, and the app at `/app`).
 
 ## What is verified, and how to check it
 
 `pnpm e2e:testnet` plays the whole scene against the live relayer and agent with fresh random keys. Latest run (12 Oct 2026):
 **110 checks passed**, 23 confirmed transactions, **median 0.50 s** (fastest 0.33 s, slowest 0.87 s). Raw numbers:
-[`docs/e2e-testnet.json`](e2e-testnet.json). `/traction` lists the latest transactions with explorer links and counts the contracts' own events live. 95 Foundry tests pass (`pnpm contracts:test`), including a fork test
+[`docs/e2e-testnet.json`](e2e-testnet.json). The app's **Our network** screen counts the contracts' own events live. 95 Foundry tests pass (`pnpm contracts:test`), including a fork test
 against the real Agora pair. `pnpm parity` proves TypeScript and Solidity agree on every hash.
 
 ---
@@ -300,8 +300,6 @@ fastest time from a hold opening to a parent stopping it**, recomputed as each s
 count, which is what raises the hold level for the next family.
 
 **What it powers.**
-- **`/traction`** on the live site reads its counters from Envio and says "Envio HyperIndex". If Envio does not answer, the page
-  falls back to the relayer's own count of the same events and says that instead.
 - **The app** reads the network numbers ("Families protected") and the **evidence on a hold card** ("N families reported this
   payee") from Envio first, with the same labelled fallback. The decision on a hold is never read from the indexer: it is always read
   from the contract, so an indexer delay cannot show a family a stale "safe".
@@ -316,7 +314,6 @@ exactly: 2 families, 14 holds and 2 SOS presses on the Agora vault (and 20, 101 
 - `pnpm check:indexer` validates `config.yaml` against the JSON schema inside the pinned `envio` package, and every event signature
   against the compiled ABI. It catches the v2-style config that failed our first Envio build.
 - `ENVIO_GRAPHQL_URL=https://indexer.dev.hyperindex.xyz/228e4fb/v1/graphql pnpm check:envio` sends every query the app and site use to the live indexer: all five are accepted.
-- `/traction` was checked live: it reads "Envio HyperIndex", and against a stand-in server it falls back and says so.
 
 **Not yet seen:** the hold card's evidence line on a physical phone.
 
@@ -397,8 +394,6 @@ The group is selected on our hackathon profile. Nothing else in this repository 
   parent stops a payment, the family's own guardian account records one reputation entry (no family, payee, handle or amount).
   The relayer tops up gas and broadcasts only the exact expected call. Details shows "agent #2187 · N verified saves". The
   saves recorded so far include our own test runs.
-- **Traction page** (`/traction` on the landing page): counts of the contracts' own events, with real families and our own test
-  runs reported apart.
 
 ## Honest claims
 
@@ -417,7 +412,7 @@ The group is selected on our hackathon profile. Nothing else in this repository 
 ## Judge instructions
 
 **Fastest look, no passkeys needed:** open https://companion-monad.vercel.app. Its phone screens come from a recorded run of a
-fictional family on testnet, and `/traction` shows live counts and the latest transactions with explorer links. This is the
+fictional family on testnet, and the app's **Our network** screen shows live counts from the chain. This is the
 read-only view.
 
 **The full two-device flow (about two minutes).** Open https://companion-monad.vercel.app/app on two devices, or in two browser

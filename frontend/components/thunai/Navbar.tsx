@@ -2,7 +2,6 @@ import { APP_URL, appLinkProps } from "@/lib/app";
 
 const links = [
   { label: "How the app works", href: "/#app" },
-  { label: "Traction", href: "/traction" },
   { label: "Safeguards", href: "/#safeguards" },
   { label: "FAQ", href: "/#faq" },
 ];

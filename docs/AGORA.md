@@ -69,7 +69,7 @@ lower `CTK_TARGET` that the AUSD already held can cover.
 
 - The app's **Details** screen says "Agora Instant Settlement: on", read from the vault itself.
 - On the explorer, every `Payout` event of the vault has `viaAgora = true`.
-- The live traction page (Envio) counts settlements "through Agora" against "through the fallback".
+- The app's **Our network** screen (read from Envio) counts allowances settled through Agora against the fallback.
 
 ## Known limit
 
