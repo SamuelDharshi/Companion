@@ -19,6 +19,14 @@ export function formatUsd(amount: bigint): string {
   })}`;
 }
 
+/**
+ * The same amount named as the token it really is: AUSD, Agora's US-dollar stablecoin, which is what the student's balance
+ * holds after Agora Instant Settlement. "150 AUSD", "12.50 AUSD".
+ */
+export function formatAusd(amount: bigint): string {
+  return `${formatUsd(amount).slice(1)} AUSD`;
+}
+
 /** Dollars as typed by a person, to the 6-decimal onchain unit. */
 export function toUnits(dollars: number | string): bigint {
   return parseUnits(String(dollars), USD_DECIMALS);

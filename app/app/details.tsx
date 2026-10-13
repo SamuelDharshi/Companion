@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Linking, Pressable, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
-import { explorerAddressUrl } from "@thunai/shared";
+import { explorerAddressUrl, formatAusd } from "@thunai/shared";
 import {
   Body,
   Card,
@@ -238,7 +238,7 @@ export default function Details() {
           <Heading>This family</Heading>
           <Proof>family · #{family.familyId}</Proof>
           <Proof>role · {device.role}</Proof>
-          <Proof>available · {family.balanceLabel}</Proof>
+          <Proof>available · {formatAusd(BigInt(family.balance))} (Agora's US-dollar stablecoin)</Proof>
           <Proof>from home, not yet sent on · {family.homeBalanceLabel}</Proof>
           <Small>
             Your family&apos;s money sits in the contract, counted to your family alone. No

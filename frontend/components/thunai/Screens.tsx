@@ -14,7 +14,7 @@ export function StudentHome() {
   return (
     <Phone label="Student home screen">
       <FamilyLine left={initials[0]} right={initials[1]} />
-      <p className="mt-4 text-[11px] font-semibold tracking-wide text-ink-faint">YOUR BALANCE</p>
+      <p className="mt-4 text-[11px] font-semibold tracking-wide text-ink-faint">YOUR BALANCE · AUSD</p>
       <p className="font-grotesk text-[38px] font-bold leading-none tracking-tight">{demo.final.balanceLabel}</p>
       <div className="mt-3 rounded-2xl bg-brand-tint p-3">
         <p className="text-[11px] font-semibold uppercase text-brand-deep">Next allowance</p>

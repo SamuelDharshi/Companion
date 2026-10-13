@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Pressable, View } from "react-native";
 import { useRouter } from "expo-router";
-import { formatUsd, HOLD_STATUS } from "@thunai/shared";
+import { formatAusd, formatUsd, HOLD_STATUS } from "@thunai/shared";
 import {
   Amount,
   Body,
@@ -59,8 +59,9 @@ export default function StudentHome() {
       </View>
 
       <Card>
-        <Small>{t("balance", lang)}</Small>
-        <Amount>{family ? family.balanceLabel : "—"}</Amount>
+        <Small>{t("balance", lang)} · AUSD</Small>
+        <Amount>{family ? formatAusd(BigInt(family.balance)) : "—"}</Amount>
+        <Small>AUSD is Agora's US-dollar stablecoin: 1 AUSD = $1. It arrives through Agora Instant Settlement.</Small>
         {family?.frozen ? (
           <Pill label={t("heldFrozen", lang)} tone="trust" icon="⏸" />
         ) : family?.env.weeklyAmount && family.env.weeklyAmount !== "0" ? (

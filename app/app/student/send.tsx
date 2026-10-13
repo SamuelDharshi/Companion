@@ -20,7 +20,7 @@ import { t } from "@/i18n/strings";
 import { useFamily } from "@/hooks/useThunai";
 import { SessionExpiredError, sendMoney } from "@/actions/money";
 import { api } from "@/api/client";
-import { normalizeContact, toUnits } from "@thunai/shared";
+import { formatAusd, normalizeContact, toUnits } from "@thunai/shared";
 import SessionPrompt from "@/ui/SessionPrompt";
 import { useDeviceState } from "@/state/store";
 import type { Address } from "viem";
@@ -103,7 +103,7 @@ export default function Send() {
     // Say it plainly before the contract does: it refuses a payment larger than the balance.
     if (family && toUnits(amountUsd) > BigInt(family.balance)) {
       setError(
-        `You have ${family.balanceLabel}. Ask ${family.guardianName ?? "your parent"} to send money first, or send a smaller amount.`,
+        `You have ${formatAusd(BigInt(family.balance))}. Ask ${family.guardianName ?? "your parent"} to send money first, or send a smaller amount.`,
       );
       return;
     }
@@ -248,7 +248,7 @@ export default function Send() {
       {error ? <ErrorNote message={error} /> : null}
 
       <SecondaryButton label={t("cancel", lang)} onPress={() => router.back()} />
-      <Proof>Available: {family?.balanceLabel ?? "—"}</Proof>
+      <Proof>Available: {family ? formatAusd(BigInt(family.balance)) : "—"}</Proof>
     </Screen>
   );
 }

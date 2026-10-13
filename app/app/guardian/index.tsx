@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Linking, Pressable, View } from "react-native";
 import { useRouter } from "expo-router";
-import { formatUsd } from "@thunai/shared";
+import { formatAusd, formatUsd, toUnits } from "@thunai/shared";
 import {
   Amount,
   Body,
@@ -82,7 +82,9 @@ export default function GuardianHome() {
     try {
       const weekly = family.env.weeklyAmount !== "0" ? Number(family.env.weeklyAmount) / 1e6 : 150;
       const result = await sendMoneyNow({ familyId: device.familyId, amountUsd: weekly });
-      setNote(`Sent. It arrived in ${(result.latencyMs / 1000).toFixed(1)}s.`);
+      setNote(
+        `Sent ${formatAusd(toUnits(weekly))} to ${studentName} through Agora Instant Settlement. It arrived in ${(result.latencyMs / 1000).toFixed(1)}s.`,
+      );
       refresh();
     } catch (cause) {
       if (cause instanceof SessionExpiredError) setExpired(true);
@@ -128,7 +130,7 @@ export default function GuardianHome() {
           pulse={checkPending}
           caption={
             family && family.balance !== "0"
-              ? `${studentName} has ${family.balanceLabel} available`
+              ? `${studentName} has ${formatAusd(BigInt(family.balance))} available`
               : undefined
           }
         />
