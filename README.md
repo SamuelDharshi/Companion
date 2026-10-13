@@ -46,11 +46,6 @@ Every number and name on the landing page comes from a real run on Monad testnet
 
 ![Companion landing page: "Money from home, with family watching", with the student's AUSD balance and a held payment](docs/images/landing-hero.png)
 
-| | |
-|---|---|
-| ![Chennai to Indiana in about a second: the 3D globe and the measured median confirmation](docs/images/landing-globe.png) | ![Anything unusual pauses first: a $120 payment to a new person, held in 0.8 s](docs/images/landing-held.png) |
-| ![She decides, with her own Face ID: the parent's alert and the stopped payment](docs/images/landing-guardian.png) | ![Check on Arjun: his passkey answered, verified onchain in 1.3 s](docs/images/landing-check.png) |
-
 **Contents**
 
 1. [The idea in one minute](#1-the-idea-in-one-minute)
