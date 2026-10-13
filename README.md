@@ -32,6 +32,7 @@ Built for **Monad Metropolis** · **Track: Consumer Products & Payments** · Mon
 13. [Track and bounties](#13-track-and-bounties)
 14. [Honest limits](#14-honest-limits)
 15. [Business model](#15-business-model)
+16. [Tech stack, credits, AI use and licence](#16-tech-stack-credits-ai-use-and-licence)
 
 ---
 
@@ -882,6 +883,50 @@ companies use. The guardian layer is free, and it is why families stay.
                                       └── the protection (holds, checks, SOS) costs the family nothing,
                                           and is the reason they stay
 ```
+
+
+---
+
+## 16. Tech stack, credits, AI use and licence
+
+### Tech stack
+
+| Layer | What we used |
+|---|---|
+| Chain | Monad testnet (chain 10143): `eth_sendRawTransactionSync`, the P256 precompile at `0x0100` (EIP-7951) |
+| Contracts | Solidity, [Foundry](https://github.com/foundry-rs/foundry) (forge-std), [Solady](https://github.com/Vectorized/solady) (`WebAuthn`, `P256`, `ECDSA`, `EIP712`, `MerkleProofLib`, `SafeTransferLib`) |
+| Accounts | [Mera](https://github.com/category-labs/mera) (`@category-labs/mera`): passkeys, PRF-derived keys, signing sessions |
+| Payments | [Agora](https://docs.agora.finance) Instant Settlement (CTK/AUSD pair, testnet Whitelister and AUSD faucet) |
+| App | [Expo](https://expo.dev) / React Native / React Native Web, expo-router |
+| Website | [Next.js](https://nextjs.org), React, Tailwind CSS, [three.js](https://threejs.org) (the 3D globe) |
+| Servers | Node.js, [Fastify](https://fastify.dev), [viem](https://viem.sh), zod, dotenv, web-push, the [Anthropic SDK](https://github.com/anthropics/anthropic-sdk-typescript) (optional explanation text only) |
+| Data and automation | [Envio HyperIndex](https://docs.envio.dev), [Chainlink CRE SDK](https://docs.chain.link/cre), [Alchemy](https://www.alchemy.com) (failover RPC, webhooks) |
+| Hosting | Vercel (website), Render (relayer and agent), Envio Cloud (indexer) |
+
+Each library keeps its own licence; see `contracts/lib/*` and each `package.json`. Private family video calls open a [Jitsi Meet](https://meet.jit.si) room link.
+
+### Pre-existing components
+
+- **The website started from a v0-generated Next.js landing-page template** ("pixelcraft-landing"). Everything on the current site
+  (`frontend/components/thunai/`, `frontend/app/`, `frontend/lib/`) was written during the hackathon; the unused template components
+  were removed.
+- No other pre-existing project code. Solady, forge-std and the npm packages above are third-party libraries, used under their licences.
+
+### Build window and commit history
+
+The project was built during the Metropolis hackathon period (September to October 2026). It was developed locally and first pushed to
+GitHub on 12 October 2026, in small commits of under 900 lines each, so the GitHub history starts on that date; every later change is its
+own commit.
+
+### Use of AI coding tools
+
+**Disclosed, as the rules require:** this project was built with substantial help from AI coding tools, chiefly **Claude Code**
+(Anthropic). It was used to write and refactor code, tests, scripts and documentation, under the team's direction and review. All claims
+in the docs were checked against running code and the live chain (`docs/STATUS.md`).
+
+### Licence
+
+[MIT](LICENSE), © 2026 Samuel Dharshi.
 
 [mea]: https://www.business-standard.com/immigration/75x-jump-in-scams-hits-indians-in-us-amid-visa-crackdown-govt-data-126040600784_1.html
 [wion]: https://www.wionews.com/world/indian-student-in-us-becomes-victim-of-digital-arrest-scam-loses-5-000-to-scammers-posing-as-ice-officers-here-s-what-happened-1749373803522/amp
