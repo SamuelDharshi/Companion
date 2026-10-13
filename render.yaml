@@ -27,6 +27,19 @@ services:
     buildCommand: corepack enable && pnpm install --frozen-lockfile --filter @thunai/relayer... --filter @thunai/agent...
     startCommand: node scripts/serve.mjs
     healthCheckPath: /health
+    # Redeploy only when the service itself changes. A push of docs, the website or the app would otherwise restart it and
+    # wipe the temporary store (names, invites, push subscriptions), for nothing.
+    buildFilter:
+      paths:
+        - relayer/**
+        - agent/**
+        - packages/**
+        - contracts/deployments/**
+        - scripts/serve.mjs
+        - render.yaml
+        - package.json
+        - pnpm-lock.yaml
+        - pnpm-workspace.yaml
     envVars:
       - key: NODE_VERSION
         value: 22
