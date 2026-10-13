@@ -20,7 +20,7 @@ import { t } from "@/i18n/strings";
 import { useFamily } from "@/hooks/useThunai";
 import { SessionExpiredError, sendMoney } from "@/actions/money";
 import { api } from "@/api/client";
-import { normalizeContact } from "@thunai/shared";
+import { normalizeContact, toUnits } from "@thunai/shared";
 import SessionPrompt from "@/ui/SessionPrompt";
 import { useDeviceState } from "@/state/store";
 import type { Address } from "viem";
@@ -98,6 +98,13 @@ export default function Send() {
     }
     if (!memo.trim()) {
       setError(t("whatsThisForRequired", lang));
+      return;
+    }
+    // Say it plainly before the contract does: it refuses a payment larger than the balance.
+    if (family && toUnits(amountUsd) > BigInt(family.balance)) {
+      setError(
+        `You have ${family.balanceLabel}. Ask ${family.guardianName ?? "your parent"} to send money first, or send a smaller amount.`,
+      );
       return;
     }
 
