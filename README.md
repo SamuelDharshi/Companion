@@ -4,16 +4,52 @@
 
 *Companion* (**Thunai** in Tamil, which means "companion") is a family money agent for Indian parents with a child studying abroad.
 
-- **Every week**, it moves the allowance across borders in about a second (measured median 0.50 s on Monad testnet).
+- **Every week**, it moves the allowance across borders in about a second (measured median 0.47 s on Monad testnet).
 - **When something is wrong**, it pauses the money and pages Kavya before anything moves.
 
 Built for **Monad Metropolis** · **Track: Consumer Products & Payments** · Monad Testnet (10143)
 
-**Bounties:** Agora Cross-Border Payments · Mera "Best Mera-Powered UX" · Mera "One Passkey, Many Keys" · Best Community Team. Chainlink CRE is built and simulated; the Envio indexer is live; Alchemy's failover is verified and its alert webhook is built. Each is described with its exact status in [`docs/SUBMISSION.md`](docs/SUBMISSION.md).
+**Bounties entered:** Agora (Best Cross-Border Payments App) · Mera (Best Mera-Powered UX) · Mera (One Passkey, Many Keys) ·
+Chainlink (Best workflow with CRE) · Envio (Best Use of Envio) · Alchemy (Best Projects using Alchemy) · Best Community Team (only if our
+campus group is in the portal's list). How each one is met, with evidence and its video: [section 13](#13-track-and-bounties).
 
 **Live:** https://companion-monad.vercel.app (the app is at `/app`). Testnet only.
 
+**Videos:** [the full playlist](https://youtube.com/playlist?list=PLY0VC16z_Ksc), one per track and bounty ([list below](#videos)).
+
+**Feedback for Monad and the sponsors:** [`FEEDBACK.md`](FEEDBACK.md) covers one real pain point per sponsor, found while building, with
+its root cause, our fix in this repo and a proposed fix for them.
+
 **All docs:** [`docs/README.md`](docs/README.md) is the index of every guide, command and code folder.
+
+### Videos
+
+| Video | Length | For |
+|---|---|---|
+| [Companion: the demo](https://www.youtube.com/watch?v=5s3EPyhwbrY) | 2:50 | Main track demo (Consumer Products & Payments) |
+| [Companion: pitch](https://www.youtube.com/watch?v=B35gSEIRm5c) | 2:42 | Main track pitch |
+| [Companion: short demo](https://www.youtube.com/watch?v=b9HSHEB9pic) | 1:41 | A shorter walkthrough |
+| [Agora](https://www.youtube.com/watch?v=DQsAm-ra4RA) | 1:44 | Agora: Best Cross-Border Payments App |
+| [Mera UX](https://www.youtube.com/watch?v=bWgm_qVfN2k) | 1:21 | Mera: Best Mera-Powered UX |
+| [Mera keys](https://www.youtube.com/watch?v=SQwHv-2Vxnc) | 1:10 | Mera: One Passkey, Many Keys |
+| [Chainlink CRE](https://www.youtube.com/watch?v=daIYA_BimC0) | 1:18 | Chainlink: Best workflow with CRE |
+| [Envio](https://www.youtube.com/watch?v=Zd7OxzkSmko) | 1:10 | Envio: Best Use of Envio |
+| [Alchemy](https://www.youtube.com/watch?v=LXvLZYBDr5I) | 1:40 | Alchemy: Best Projects using Alchemy |
+
+Each bounty video is under its 2-minute limit, and the main demo is under 3 minutes.
+
+### The landing page
+
+Every number and name on the landing page comes from a real run on Monad testnet: family **15** on the live vault
+`0xF2BA…65C1`, recorded by `scripts/seed-demo.mjs` on 13 Oct 2026. Each step has a transaction hash in
+[`frontend/data/demo.json`](frontend/data/demo.json). The names Arjun and Kavya belong to that test family; the transactions are real.
+
+![Companion landing page: "Money from home, with family watching", with the student's AUSD balance and a held payment](docs/images/landing-hero.png)
+
+| | |
+|---|---|
+| ![Chennai to Indiana in about a second: the 3D globe and the measured median confirmation](docs/images/landing-globe.png) | ![Anything unusual pauses first: a $120 payment to a new person, held in 0.8 s](docs/images/landing-held.png) |
+| ![She decides, with her own Face ID: the parent's alert and the stopped payment](docs/images/landing-guardian.png) | ![Check on Arjun: his passkey answered, verified onchain in 1.3 s](docs/images/landing-check.png) |
 
 **Contents**
 
@@ -132,6 +168,32 @@ and Indiana. Companion is the cross-border version, enforced by a neutral contra
 
 The most important flow: **a scammer's payment is stopped by a parent on another continent,
 inside the time the scammer is still on the line.**
+
+### The simple sequence diagram
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor A as Arjun (student)
+    participant R as Relayer (pays gas)
+    participant V as ThunaiVault (Monad)
+    participant G as Agent (pager)
+    actor K as Kavya (parent)
+
+    A->>R: Send $2,000 to a new person (signed in the Face ID session)
+    R->>V: withdraw(intent)
+    V->>V: Rules: new payee, so money goes to ESCROW
+    V-->>G: event HoldOpened
+    G-->>K: Push and WhatsApp link: "Arjun needs you"
+    R-->>A: "Held for safety. We've asked Kavya." (about 1 s)
+    K->>R: Stop it (Face ID: passkey assertion over the hold)
+    R->>V: resolveHold(cancel, assertion)
+    V->>V: P256 precompile 0x0100 checks HER passkey
+    V-->>A: Money back to Arjun. The payee got nothing
+    Note over V: Nobody answered? After the window, anyone calls expireHold()<br/>and the money returns to Arjun.
+```
+
+### The same flow, in detail
 
 ```
  Arjun's phone        Relayer          ThunaiVault        Agent / Pager       Kavya's phone
@@ -484,7 +546,8 @@ If the model is down, wrong or manipulated, the hold is already open and Kavya s
 
 ### Words you will not see
 
-No wallet, gas, seed phrase, token, blockchain or chain ID appears on a family's screen. The
+No wallet, gas, seed phrase, blockchain or chain ID appears on a family's screen. The balance is labelled **AUSD**, Agora's
+dollar stablecoin, because that is what the student holds, and the home screen explains it: "1 AUSD = $1". The
 Details screen is the one place that names the machinery, deliberately, for transparency.
 
 ---
@@ -619,13 +682,13 @@ The rescue has to finish **while the scammer is still on the line.**
 ```
    Time from "tap" to "confirmed" on Monad testnet (measured, pnpm e2e:testnet)
 
-   fastest   0.33 s  ███████
-   median    0.50 s  ██████████
-   slowest   0.87 s  █████████████████
+   fastest   0.17 s  ████
+   median    0.47 s  █████████
+   slowest   0.85 s  █████████████████
                      0       0.5      1.0      1.5 s
 ```
 
-**Measured on live Monad testnet** (`pnpm e2e:testnet`, 23 confirmed transactions): median **0.50 s**, fastest 0.33 s, slowest 0.87 s, run through the deployed site and relayer. Raw numbers are in [`docs/e2e-testnet.json`](docs/e2e-testnet.json). No other latency figure is quoted anywhere.
+**Measured on live Monad testnet** (`pnpm e2e:testnet`, latest run on 13 Oct 2026, 23 confirmed transactions on the Agora vault): median **0.47 s**, fastest 0.17 s, slowest 0.85 s. Raw numbers are in [`docs/e2e-testnet.json`](docs/e2e-testnet.json). No other latency figure is quoted anywhere.
 
 ---
 
@@ -635,7 +698,7 @@ The rescue has to finish **while the scammer is still on the line.**
 ┌──────────── Companion app (Expo: one app, two roles) ─────────────┐
 │ Mera: one passkey per person, three independent keys              │
 │   thunai/acct    → secp256k1 account (signs withdraw intents)     │
-│   notes vault    → encrypts the family question (Mera-managed)    │
+│   thunai/notes   → AES-256-GCM key for private notes (onchain)    │
 │   thunai/duress  → secp256k1 freeze key, registered onchain       │
 │ Custom WebAuthnClient → the SAME Face ID also yields a P256       │
 │   assertion over our action hash, for onchain verification        │
@@ -650,8 +713,8 @@ The rescue has to finish **while the scammer is still on the line.**
 │ Companion agent (Node)                  │   │ ThunaiVault            │
 │  allowance runner · keeper (expireHold) │──►│ (Monad testnet)        │
 │  rules classifier (+ optional LLM)      │   │  envelopes · holds     │
-│  pager: WhatsApp link (web push is not  │   │  guardian release      │
-│         wired into the app yet)         │   │  WebAuthn → 0x0100     │
+│  pager: web push + WhatsApp link        │   │  guardian release      │
+│  CRE endpoints · Alchemy webhook        │   │  WebAuthn → 0x0100     │
 │  Silent SOS page and video-call link    │   │  liveness · duress     │
 └─────────────────────────────────────────┘   │  freeze                │
                                               └───┬────────────────┬───┘
@@ -662,7 +725,8 @@ The rescue has to finish **while the scammer is still on the line.**
                                    └──────────────────┘   └─────────────────────┘
 ```
 
-The app reads the contract and the relayer directly. There is no indexer in the running system.
+The app reads the contract through the relayer, and the network counters and hold evidence from the **Envio** indexer (falling back
+to the relayer's own count, and saying so, if the indexer is unreachable).
 
 | Folder | What's in it |
 |---|---|
@@ -670,9 +734,9 @@ The app reads the contract and the relayer directly. There is no indexer in the 
 | [`relayer/`](relayer) | Gas sponsorship, `eth_sendRawTransactionSync`, intent API |
 | [`agent/`](agent) | Allowance runner, keeper, classifier, pager |
 | [`cre/`](cre) | A Chainlink CRE workflow that reads the vault on Monad testnet and drives the allowance and the unanswered holds through the agent. `cre workflow simulate` passes against the live chain; output in [`docs/cre-simulation.txt`](docs/cre-simulation.txt). Not deployed to the CRE network. |
-| [`indexer/`](indexer) | The Envio HyperIndex 3 indexer (config, schema with derived entities, handlers). **Live on Envio Cloud**; the app read it. |
+| [`indexer/`](indexer) | The Envio HyperIndex 3 indexer (config, schema with derived entities, handlers). **Live on Envio Cloud**; the app reads it. |
 | [`app/`](app) | Expo app — both roles, every screen |
-| [`frontend/`](frontend) | The landing page (Next.js). Its numbers come from a recorded run on testnet. |
+| [`frontend/`](frontend) | The landing page (Next.js, three.js globe). Its numbers come from a real run on the live vault (`frontend/data/demo.json`). |
 | [`packages/shared`](packages/shared) | Chain config, ABIs, action hashes, merkle trees, copy-safe money formatting |
 | [`packages/evm`](packages/evm) | Vault bindings shared by relayer and agent |
 
@@ -808,7 +872,7 @@ Passkeys need a secure context, so use `https://` or `localhost`. See [`docs/DEM
 | AUSD (Agora's testnet token, 6 decimals) | `0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC` |
 | Agora CTK/AUSD pair | `0x1Aa8958Aa34cEC8096EF4381cb335effe977b0ae` |
 | Agora testnet Whitelister | `0x7c10F56d6f04a51376393a1C3670e966863F6BD5` |
-| Earlier vault on stand-in tokens (retired; the landing page's recorded run used it) | `0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87` |
+| Earlier vault on stand-in tokens (retired, no longer used anywhere) | `0x3aC3F87d6713390aCfeD85133Ca662d7a2ADCf87` |
 | ERC-8004 identity registry (agent **#2187**) | `0x8004A818BFB912233c491871b3d84c89A494BD9e` |
 | P256 precompile | `0x0000000000000000000000000000000000000100` |
 
@@ -816,25 +880,109 @@ Passkeys need a secure context, so use `https://` or `localhost`. See [`docs/DEM
 
 ## 13. Track and bounties
 
-**Track: Consumer Products & Payments.** An end-user app for a student and a parent, with no crypto
-word on their screens.
+### Where each sponsor sits in the app
 
-- [**Agora** — cross-border payments](docs/SUBMISSION.md#agora)
-- [**Mera** — best Mera-powered UX](docs/SUBMISSION.md#mera-ux)
-- [**Mera** — one passkey, many keys](docs/SUBMISSION.md#mera-many-keys)
-- Best Community Team (selected on our hackathon profile)
+```
+              ┌────────────────────────── ONE FACE ID ──────────────────────────┐
+              │ MERA  passkey + PRF:  thunai/acct · thunai/notes · thunai/duress │
+              │       15-min signing session · stateless restore from passkey    │
+              └────────────────────────────────┬─────────────────────────────────┘
+                                               │ signed intents, passkey assertions
+                                               ▼
+  ALCHEMY ──failover RPC──►  RELAYER (gas only) ──eth_sendRawTransactionSync──►  MONAD TESTNET
+  (2nd RPC; Monad's public                                                  ┌──────────────────────────┐
+   RPC is the last resort)                                                  │ ThunaiVault              │
+                                                                            │  P256 precompile 0x0100  │
+                                                                            │  escrow holds, SOS       │
+                                                                            │        │ same tx         │
+                                                                            │        ▼                 │
+                                                                            │ AGORA Instant Settlement │
+                                                                            │  CTK ──► AUSD (the pair) │
+                                                                            └────┬──────────────┬──────┘
+                                                                    events       │              │ reads (Multicall3)
+                     ┌───────────────────────────────┬──────────────────────────┘              │
+                     ▼                               ▼                                          ▼
+       ENVIO HyperIndex (Envio Cloud)      ALCHEMY webhook                       CHAINLINK CRE workflow
+       families, holds, payouts,           HoldOpened / SOSRaised                cron: what is due?
+       signals, NetworkStats               → the agent pages the parent          → agent /cre/apply
+                     │                                                             (allowance, expiry, re-page)
+                     ▼
+       App: "Our network" counters and the evidence on every hold card
+```
 
-[Chainlink CRE](docs/SUBMISSION.md#chainlink-cre): the workflow simulates successfully against the live chain and the deployed agent.
+### Main track: Consumer Products & Payments
 
-[Alchemy](docs/SUBMISSION.md#alchemy): a failover RPC (verified) and a webhook that pages the parent from the chain itself (deliveries reach the app; the vault-filtered webhook has not fired yet).
+| What the track asks for | How Companion meets it | Evidence |
+|---|---|---|
+| A product real people use, not a protocol demo | A student and a parent, two roles, no crypto words on their screens. Pay a person by name and phone number | [Live app](https://companion-monad.vercel.app/app), [demo video](https://www.youtube.com/watch?v=5s3EPyhwbrY) |
+| Payments that need Monad | Sync receipts (median **0.47 s** over 23 transactions) and the P256 precompile verifying a parent's Face ID inside the contract | [`docs/e2e-testnet.json`](docs/e2e-testnet.json), [section 9](#9-why-it-needs-monad) |
+| Deployed on Monad with real transactions | Vault `0xF2BA…65C1` on testnet 10143; every landing-page figure has a transaction hash | [Explorer](https://testnet.monadexplorer.com/address/0xF2BA20FaF5f171DcDB9E7F70a489855d170465C1), [`frontend/data/demo.json`](frontend/data/demo.json) |
+| Public repo, demo video, pitch video, live link | All four | This repo, [demo](https://www.youtube.com/watch?v=5s3EPyhwbrY), [pitch](https://www.youtube.com/watch?v=B35gSEIRm5c), [site](https://companion-monad.vercel.app) |
 
-[Envio](docs/SUBMISSION.md#envio): the indexer is live on Envio Cloud, and the app's network screen and hold cards read it.
+### Agora: Best Cross-Border Payments App
 
-Not entered: Dynamic and Privy (they would replace Mera as the account layer), Cleanverse, Nansen, Aurora, Kuru, Perpl, Agora
-Trading, MetaMask and Hunyuan. [`docs/STATUS.md`](docs/STATUS.md) lists exactly what is verified, unverified and not done.
+| The bounty asks for | Companion | Where |
+|---|---|---|
+| A mobile app that sends AUSD to another person or across borders | The parent in India sends; the student's **AUSD balance** rises; the student pays a person by name and phone | `app/app/guardian/index.tsx`, `app/app/student/send.tsx` |
+| Mera passkey onboarding | One Face ID each, no seed phrase | `app/src/mera/account.ts` |
+| Instant settlement for the transfer itself | Every deposit and allowance swaps CTK to AUSD on **Agora's CTK/AUSD pair in the same transaction**, and emits `Payout(viaAgora = true)` | `_settle` in `contracts/src/ThunaiVault.sol`, [`docs/AGORA.md`](docs/AGORA.md) |
+| Built on Agora's public docs and testnet contracts | Pair, Whitelister and AUSD faucet addresses from Agora's docs; `pnpm agora:check` proves the vault passes the pair's role gate | `scripts/agora-testnet-setup.mjs`, `scripts/agora-check.mjs` |
+| Demo video, 2 minutes or less | [Agora video](https://www.youtube.com/watch?v=DQsAm-ra4RA) (1:44) | |
 
-One finding worth reading in [`docs/SUBMISSION.md`](docs/SUBMISSION.md): how one Face ID is made to
-serve both Mera's PRF and the contract's WebAuthn verification.
+### Mera: Best Mera-Powered UX
+
+| The bounty asks for | Companion | Where |
+|---|---|---|
+| Mera is the entire account layer | No Dynamic, Privy, email, OTP, extension or custody backend | `app/src/mera/` |
+| One-prompt onboarding | One passkey ceremony creates the account key **and** the duress key (two PRF salts in one Face ID) | `createThunaiAccount` in `app/src/mera/account.ts` |
+| Prompt-free signing in a scoped session | A 15-minute `thunai/acct` session covers routine actions. A parent's decision on a hold, envelope changes and unfreezing **always** ask again | [`docs/SUBMISSION.md`](docs/SUBMISSION.md#mera-ux) |
+| The stateless test | **Forget this device**, then one Face ID, restores the family, the balance and the notes from the chain | `restoreThunaiAccount`, testnet e2e beat 13 |
+| Bonus: composability | Gas paid by our relayer, the passkey verified **onchain** at Monad's P256 precompile, and Agora settlement | `app/src/mera/webauthn.ts` |
+| Video | [Mera UX video](https://www.youtube.com/watch?v=bWgm_qVfN2k) (1:21) | |
+
+### Mera: One Passkey, Many Keys
+
+| The bounty asks for | Companion | Where |
+|---|---|---|
+| At least one PRF namespace doing non-account work | `thunai/notes`: an AES-256-GCM key that encrypts the family's private notes (the ciphertext is stored onchain). `thunai/duress`: a key that can **only freeze** the family, never move money | `packages/shared/src/notes.ts`, `sos()` in the vault |
+| Salts genuinely namespaced, nothing sensitive stored | `keccak256("thunai/acct" / "thunai/notes" / "thunai/duress")`; no PRF output, key or plaintext is stored on a device or a server | `app/src/mera/account.ts` |
+| The cross-device test | The same passkey on another device shows the same three keys and opens the same notes | **Details → One passkey, three keys** |
+| Video | [Mera keys video](https://www.youtube.com/watch?v=SQwHv-2Vxnc) (1:10) | |
+
+### Chainlink: Best workflow with CRE
+
+| The bounty asks for | Companion | Where |
+|---|---|---|
+| CRE as an orchestration layer | A cron workflow reads the vault on Monad, decides what is due (allowances, unanswered holds, expiries), and calls our agent to act | `cre/companion-orchestrator/main.ts` |
+| A blockchain plus an external system | Monad testnet (EVM reads through Multicall3) plus the agent's HTTPS API, with its token in CRE's secret store | [`cre/README.md`](cre/README.md) |
+| A successful simulation or deployment | `cre workflow simulate` passes against the live chain: "13 families, 41 holds" | [`docs/cre-simulation.txt`](docs/cre-simulation.txt) |
+| Video | [CRE video](https://www.youtube.com/watch?v=daIYA_BimC0) (1:18) | |
+
+### Envio: Best Use of Envio
+
+| The bounty asks for | Companion | Where |
+|---|---|---|
+| A HyperIndex indexer, deployed, with config, schema and handlers | Live on Envio Cloud: 16 events from the vault and ScamSignals, derived entities (`Family` with its holds, payouts, checks and SOS) and an aggregate `NetworkStats` | `indexer/config.yaml`, `indexer/schema.graphql`, `indexer/src/EventHandlers.ts` |
+| It drives a feature | The app's **Our network** screen and the evidence on every hold card ("N verified families reported this payee") read Envio | `app/src/network.ts` |
+| Data flowing end to end | Stop a payment in the app, and the count rises in the playground and in the app | [Endpoint](https://indexer.dev.hyperindex.xyz/228e4fb/v1/graphql), [Envio video](https://www.youtube.com/watch?v=Zd7OxzkSmko) (1:10) |
+
+### Alchemy: Best Projects using Alchemy
+
+| The bounty asks for | Companion | Where |
+|---|---|---|
+| A functional project on Monad that meaningfully uses an Alchemy service | **Failover RPC:** the relayer and the agent move to Alchemy when the primary fails, including the synchronous send. **Webhook:** a custom GraphQL webhook, filtered to our vault's `HoldOpened` and `SOSRaised`, pages the parent from the chain itself and is checked by its HMAC signature | `packages/evm/src/chain.ts`, `agent/src/alchemy.ts`, [`docs/ALCHEMY.md`](docs/ALCHEMY.md) |
+| Video | [Alchemy video](https://www.youtube.com/watch?v=LXvLZYBDr5I) (1:40) | |
+
+### Best Community Team
+
+Entered only if our campus group appears in the portal's community list. The standard requirements (public repo, video, deployed on
+Monad) are met above.
+
+### Not entered
+
+Dynamic and Privy (they would replace Mera as the account layer), Cleanverse, Nansen, Aurora, Kuru, Perpl, Agora Trading, MetaMask and
+Hunyuan. [`docs/STATUS.md`](docs/STATUS.md) lists exactly what is verified, unverified and not done, and [`FEEDBACK.md`](FEEDBACK.md)
+has our feedback for every sponsor we used.
 
 ---
 
@@ -866,8 +1014,8 @@ Stated here rather than discovered by a judge.
   the screens say which source they used.
 - **PRF notes key on a real phone is unverified.** The notes are encrypted and stored onchain and the round trip is
   tested, but with a stand-in for the authenticator's PRF output.
-- **Nothing on the landing page is invented.** Every figure is from a recorded run with a transaction
-  hash. The family in that run is fictional.
+- **Nothing on the landing page is invented.** Every figure is from a real run on the live vault (family 15), with a
+  transaction hash for each step. The names belong to that test family.
 - **No real families yet.** Every family so far is our own test run.
 
 ---
