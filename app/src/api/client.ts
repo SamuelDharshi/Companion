@@ -33,7 +33,29 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * The hosted server runs on a free plan that sleeps when idle and takes up to a minute to wake. While it wakes, the site
+ * answers 502/503/504 (our own launcher says {"error":"starting"}), so those are retried for about a minute instead of showing
+ * a parent an error. A plain network failure is retried only for reads: a write that may have reached the server is never sent
+ * twice.
+ */
 async function request<T>(base: string, path: string, init?: RequestInit): Promise<T> {
+  const isRead = !init?.method || init.method === "GET";
+  const deadline = Date.now() + 70_000;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await requestOnce<T>(base, path, init);
+    } catch (error) {
+      const status = error instanceof ApiError ? error.status : -1;
+      const waking = status === 502 || status === 504 || (status === 503 && error instanceof ApiError && error.message === "starting");
+      const retry = waking || (status === 0 && isRead);
+      if (!retry || Date.now() > deadline) throw error;
+      await new Promise((r) => setTimeout(r, Math.min(2_000 + attempt * 1_000, 6_000)));
+    }
+  }
+}
+
+async function requestOnce<T>(base: string, path: string, init?: RequestInit): Promise<T> {
   let response: Response;
   try {
     response = await fetch(`${base}${path}`, {
