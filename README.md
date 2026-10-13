@@ -1,4 +1,4 @@
-# COMPANION  ·  Thunai
+# COMPANION(துணை)
 
 **Scammers win by cutting you off from family. Companion makes family your second key, and every family's save protects the next.**
 
