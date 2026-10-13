@@ -826,7 +826,7 @@ word on their screens.
 
 [Chainlink CRE](docs/SUBMISSION.md#chainlink-cre): the workflow simulates successfully against the live chain and the deployed agent.
 
-[Alchemy](docs/SUBMISSION.md#alchemy): a failover RPC (verified) and a webhook that pages the parent from the chain itself (built and tested; awaiting a real delivery).
+[Alchemy](docs/SUBMISSION.md#alchemy): a failover RPC (verified) and a webhook that pages the parent from the chain itself (deliveries reach the app; the vault-filtered webhook has not fired yet).
 
 [Envio](docs/SUBMISSION.md#envio): the indexer is live on Envio Cloud, and the traction page and the app read it.
 
