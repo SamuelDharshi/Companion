@@ -59,9 +59,13 @@ export type ChainLogger = {
 };
 
 export async function createChain(config: ChainConfig, log: ChainLogger): Promise<Chain> {
-  const transport = config.fallbackRpcUrl
-    ? fallback([http(config.rpcUrl), http(config.fallbackRpcUrl)], { rank: false, retryCount: 1 })
-    : http(config.rpcUrl);
+  // Primary first, then the configured fallback (Alchemy), then Monad's public RPC as the last resort, so a provider that is
+  // down or out of quota cannot stop a rescue. A local or forked node (not Monad testnet) never falls back to the public RPC.
+  const PUBLIC_MONAD_RPC = "https://testnet-rpc.monad.xyz";
+  const urls = [config.rpcUrl, config.fallbackRpcUrl].filter((u): u is string => Boolean(u));
+  const onMonad = /monad|quiknode|alchemy/i.test(config.rpcUrl);
+  if (onMonad && !urls.includes(PUBLIC_MONAD_RPC)) urls.push(PUBLIC_MONAD_RPC);
+  const transport = urls.length > 1 ? fallback(urls.map((u) => http(u)), { rank: false, retryCount: 1 }) : http(config.rpcUrl);
   const account = privateKeyToAccount(config.privateKey as Hex, { nonceManager });
 
   // Ask the node which chain it is rather than assuming Monad, so the same relayer runs

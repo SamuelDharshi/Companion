@@ -10,6 +10,7 @@ import {
   recoverAddress,
   recoverTransactionAddress,
   stringToBytes,
+  toFunctionSelector,
   type Address,
   type Hex,
   type TransactionSerializable,
@@ -24,7 +25,7 @@ import {
   normalizeContact,
   payeeAddress,
 } from "@thunai/shared";
-import { subscribeDigest } from "@thunai/shared";
+import { subscribeDigest, ThunaiVaultAbi, ScamSignalsAbi } from "@thunai/shared";
 import {
   IdentityRegistryAbi,
   ReputationRegistryAbi,
@@ -1032,15 +1033,58 @@ app.get<{ Params: { id: string } }>("/subscriptions/:id", async (request, reply)
 
 // --------------------------------------------------------------- lifecycle
 
+/** What each contract refusal means, in words a parent can act on. */
+const REFUSALS: Record<string, string> = {
+  FamilyFrozen: "Money is paused (Silent SOS). The parent must lift the pause first.",
+  NotFrozen: "The family is not paused, so there is nothing to lift.",
+  ChallengeUsed: "That approval was already used. Please try again.",
+  BadPasskey: "That Face ID does not belong to this family's parent. Use the parent's own device.",
+  BadSignature: "This device's keys do not match this family. Use the student's own device or browser, not one shared with the parent.",
+  BadNonce: "This was already done, or a newer request replaced it. Refresh and try again.",
+  InsufficientBalance: "Not enough money in the account for this.",
+  HoldNotOpen: "This payment was already decided.",
+  HoldNotExpired: "This payment is still waiting for the parent.",
+  NoSuchFamily: "This family was not found.",
+  NoSuchHold: "This payment was not found.",
+  NotDue: "The allowance is not due yet.",
+  EnvelopeExpired: "The weekly allowance has expired. The parent needs to sign a new one.",
+  IntentExpired: "This request expired. Please try again.",
+  ZeroAmount: "Enter an amount above zero.",
+  NoCheckPending: "There is no check waiting for an answer.",
+  UnbackedCredit: "The vault cannot cover this right now. Please try again later.",
+  AlreadyReported: "This payee was already reported for this payment.",
+  HoldNotCancelled: "Only a payment the parent stopped can be reported.",
+};
+const refusalBySelector = new Map<string, string>();
+for (const item of [...ThunaiVaultAbi, ...ScamSignalsAbi] as readonly { type: string; name?: string }[]) {
+  if (item.type === "error" && item.name) refusalBySelector.set(toFunctionSelector(`function ${item.name}()`), item.name);
+}
+
+/** Finds the contract's revert data anywhere in a viem error chain. */
+function revertSelector(error: unknown): string | undefined {
+  for (let e: any = error, depth = 0; e && depth < 8; e = e.cause, depth++) {
+    for (const candidate of [e.data, e.data?.data, e.raw]) {
+      if (typeof candidate === "string" && /^0x[0-9a-fA-F]{8}/.test(candidate)) return candidate.slice(0, 10).toLowerCase();
+    }
+    const m = /"data"\s*:\s*"(0x[0-9a-fA-F]{8})/.exec(String(e.details ?? e.message ?? ""));
+    if (m?.[1]) return m[1].toLowerCase();
+  }
+  return undefined;
+}
+
 app.setErrorHandler((error: Error, _request, reply) => {
   const status = (error as { statusCode?: number }).statusCode ?? 500;
   if (status >= 500) app.log.error({ err: error }, "request failed");
-  // Revert reasons are the most useful thing a developer can see here, and they carry
-  // no secrets: every rule they describe is public in the contract.
-  reply.code(status).send({
-    error: error.message,
-    details: (error as { shortMessage?: string }).shortMessage,
-  });
+  // Never send raw RPC errors to a phone: they can contain the RPC address and its API key. A contract refusal is
+  // translated into plain words; anything else becomes a short generic message, with the detail kept in our log.
+  const selector = revertSelector(error);
+  const name = selector ? refusalBySelector.get(selector) : undefined;
+  let message: string;
+  if (status < 500) message = error.message;
+  else if (name) message = REFUSALS[name] ?? `The contract refused this (${name}).`;
+  else if (selector === "0x4e487b71") message = "Not enough money in the account for this.";
+  else message = "Something went wrong on the network. Please try again in a moment.";
+  reply.code(name ? 409 : status).send({ error: message.replace(/https?:\/\/\S+/g, "[hidden]"), ...(name ? { reason: name } : {}) });
 });
 
 const address = await app.listen({ port: env.PORT, host: env.HOST });

@@ -16,6 +16,7 @@ import { colors, space } from "@/theme";
 import { addSosDetail, freezeEverything, videoCallUrl } from "@/actions/money";
 import type { DemandKind } from "@/api/client";
 import { useDeviceState } from "@/state/store";
+import { api } from "@/api/client";
 import { useFamily } from "@/hooks/useThunai";
 
 /**
@@ -55,6 +56,13 @@ export default function Sos() {
     setState("sending");
     setError(undefined);
     try {
+      // Already paused (a second tap, or an SOS raised earlier): the family has been told, so don't sign another freeze.
+      const current = await api.family(device.familyId).catch(() => undefined);
+      if (current?.frozen) {
+        setRoom(current.sos?.room);
+        setState("sent");
+        return;
+      }
       const result = await freezeEverything(device.familyId, "sos");
       setRoom(result.room);
       setState("sent");
