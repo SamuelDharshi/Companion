@@ -29,19 +29,23 @@ contract CompanionAuditLog is IReceiver {
         uint256 holdId;
         bytes32 agentResultHash;
         uint64 ts;
+        uint8 riskScore;
+        uint8 reasonCode;
     }
 
     error InvalidForwarder();
     error InvalidSender(address sender, address expected);
     error NotOwner();
     error UnknownAction(uint8 action);
+    error DuplicateReport(bytes32 reportHash);
 
-    event CreAction(uint8 indexed action, uint256 indexed familyId, uint256 indexed holdId, bytes32 agentResultHash, uint64 ts);
+    event CreAction(uint8 indexed action, uint256 indexed familyId, uint256 indexed holdId, bytes32 agentResultHash, uint64 ts, uint8 riskScore, uint8 reasonCode);
     event ForwarderUpdated(address indexed previousForwarder, address indexed newForwarder);
 
     address public immutable owner;
     address public forwarder;
     Entry[] private entries;
+    mapping(bytes32 reportHash => bool seen) public reported;
 
     constructor(address forwarder_) {
         if (forwarder_ == address(0)) revert InvalidForwarder();
@@ -60,11 +64,14 @@ contract CompanionAuditLog is IReceiver {
     /// @inheritdoc IReceiver
     function onReport(bytes calldata, bytes calldata report) external {
         if (msg.sender != forwarder) revert InvalidSender(msg.sender, forwarder);
-        (uint8 action, uint256 familyId, uint256 holdId, bytes32 agentResultHash, uint64 ts) =
-            abi.decode(report, (uint8, uint256, uint256, bytes32, uint64));
+        (uint8 action, uint256 familyId, uint256 holdId, bytes32 agentResultHash, uint64 ts, uint8 riskScore, uint8 reasonCode) =
+            abi.decode(report, (uint8, uint256, uint256, bytes32, uint64, uint8, uint8));
         if (action > uint8(Action.NO_OP)) revert UnknownAction(action);
-        entries.push(Entry(Action(action), familyId, holdId, agentResultHash, ts));
-        emit CreAction(action, familyId, holdId, agentResultHash, ts);
+        bytes32 reportHash = keccak256(report);
+        if (reported[reportHash]) revert DuplicateReport(reportHash);
+        reported[reportHash] = true;
+        entries.push(Entry(Action(action), familyId, holdId, agentResultHash, ts, riskScore, reasonCode));
+        emit CreAction(action, familyId, holdId, agentResultHash, ts, riskScore, reasonCode);
     }
 
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {

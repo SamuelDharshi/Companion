@@ -5,7 +5,7 @@ import {Test} from "forge-std/Test.sol";
 import {CompanionAuditLog, IReceiver, IERC165Like} from "../src/CompanionAuditLog.sol";
 
 contract CompanionAuditLogTest is Test {
-    event CreAction(uint8 indexed action, uint256 indexed familyId, uint256 indexed holdId, bytes32 agentResultHash, uint64 ts);
+    event CreAction(uint8 indexed action, uint256 indexed familyId, uint256 indexed holdId, bytes32 agentResultHash, uint64 ts, uint8 riskScore, uint8 reasonCode);
 
     address forwarder = address(0xF0);
     CompanionAuditLog auditLog;
@@ -15,7 +15,7 @@ contract CompanionAuditLogTest is Test {
     }
 
     function _report(uint8 action, uint256 familyId, uint256 holdId) internal pure returns (bytes memory) {
-        return abi.encode(action, familyId, holdId, keccak256("agent result"), uint64(1_800_000_000));
+        return abi.encode(action, familyId, holdId, keccak256("agent result"), uint64(1_800_000_000), uint8(80), uint8(1));
     }
 
     function test_DecodesAndAppends() public {
@@ -28,11 +28,13 @@ contract CompanionAuditLogTest is Test {
         assertEq(e.holdId, 57);
         assertEq(e.agentResultHash, keccak256("agent result"));
         assertEq(e.ts, 1_800_000_000);
+        assertEq(e.riskScore, 80);
+        assertEq(e.reasonCode, 1);
     }
 
     function test_EmitsCreAction() public {
         vm.expectEmit(true, true, true, true);
-        emit CreAction(0, 15, 0, keccak256("agent result"), 1_800_000_000);
+        emit CreAction(0, 15, 0, keccak256("agent result"), 1_800_000_000, 80, 1);
         vm.prank(forwarder);
         auditLog.onReport("", _report(0, 15, 0));
     }
@@ -68,6 +70,16 @@ contract CompanionAuditLogTest is Test {
         vm.prank(forwarder);
         vm.expectRevert(abi.encodeWithSelector(CompanionAuditLog.InvalidSender.selector, forwarder, address(0xF1)));
         auditLog.onReport("", _report(0, 1, 0));
+    }
+
+    function test_RejectsReplayedReport() public {
+        bytes memory report = _report(1, 0, 7);
+        vm.startPrank(forwarder);
+        auditLog.onReport("", report);
+        vm.expectRevert(abi.encodeWithSelector(CompanionAuditLog.DuplicateReport.selector, keccak256(report)));
+        auditLog.onReport("", report);
+        vm.stopPrank();
+        assertEq(auditLog.entryCount(), 1);
     }
 
     function test_RejectsZeroForwarder() public {

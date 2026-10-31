@@ -17,10 +17,7 @@
    needs `ORCHESTRATOR=cre` on Render, a matching `CRE_TOKEN`, and a deployed or running workflow.
 2. **Old evidence does not match the chain.** `docs/cre-simulation.txt` says 19 families and 94 holds, the README says 13
    and 41, and the current vault reads 17 and 57. The older figures should be re-explained or replaced.
-3. **The repage window can be missed.** It fires only in one 60-second window, so a missed run skips the reminder.
-4. **Replay risk in the audit write.** Each completed action is recorded once by the workflow, but the contract does not
-   deduplicate reports.
+3. **Fixed in code, agent redeploy needed:** a missed run could skip the reminder.
+4. **Fixed in code, audit log not yet deployed:** the contract now rejects an identical report.
 5. **`/cre/apply` keeps hold briefs in memory,** so a restart makes repage skip.
-6. **Agent tests cover only Alchemy** (`agent/test/alchemy.test.ts`). The CRE route and classifier have no unit tests there.
-7. **The workflow has no unit tests.**
-8. **Stale claim:** the Mumbai inventory of dashboards, traceability and consensus documents does not exist yet.
+6. **Partly fixed:** assessment and workflow decision rules have tests; the full `/cre/apply` route and classifier do not.

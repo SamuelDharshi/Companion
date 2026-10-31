@@ -27,6 +27,7 @@ import {
   type Address,
 } from "viem"
 import { z } from "zod"
+import { earliestAssessAge, parseAssessment, repageDue, type Assessment } from "./decision"
 
 /**
  * Companion's orchestrator, as a Chainlink CRE workflow.
@@ -68,6 +69,8 @@ const configSchema = z.object({
   auditLogAddress: z.string().optional(),
   auditGasLimit: z.string().optional(),
   maxAuditWrites: z.number().int().nonnegative().optional(),
+  highRiskScore: z.number().int().min(0).max(100).optional(),
+  maxAssessCalls: z.number().int().nonnegative().optional(),
 })
 type Config = z.infer<typeof configSchema>
 
@@ -100,7 +103,7 @@ type Applied = { status: number; body: string }
 const callAgent = (
   runtime: Runtime<Config>,
   token: string,
-  action: "runAllowance" | "expireHold" | "repage",
+  action: "runAllowance" | "expireHold" | "repage" | "assess",
   id: bigint,
 ): { status: number; detail: any } => {
   const payload = JSON.stringify({ action, id: id.toString() })
@@ -189,15 +192,17 @@ const onCron = (runtime: Runtime<Config>): string => {
   const summary = { families, holds, allowancesSent: 0, holdsExpired: 0, parentsReminded: 0, skipped: 0, failed: 0, audited: 0, auditFailed: 0 }
 
   /** Records a completed action. A failed audit write is counted and logged; it never undoes or blocks the action. */
-  const audit = (action: AuditAction, familyId: bigint, holdId: bigint, detail: unknown) => {
+  const audit = (action: AuditAction, familyId: bigint, holdId: bigint, detail: unknown, risk?: Assessment | null) => {
     if (!config.auditLogAddress || summary.audited + summary.auditFailed >= (config.maxAuditWrites ?? 3)) return
     const agentResultHash = keccak256(toBytes(JSON.stringify(detail ?? null)))
-    const payload = encodeAbiParameters(parseAbiParameters("uint8, uint256, uint256, bytes32, uint64"), [
+    const payload = encodeAbiParameters(parseAbiParameters("uint8, uint256, uint256, bytes32, uint64, uint8, uint8"), [
       action,
       familyId,
       holdId,
       agentResultHash,
       BigInt(nowSeconds),
+      risk?.riskScore ?? 0,
+      risk?.reasonCode ?? 0,
     ])
     const report = runtime
       .report({ encodedPayload: hexToBase64(payload), encoderName: "evm", signingAlgo: "ecdsa", hashingAlgo: "keccak256" })
@@ -230,6 +235,7 @@ const onCron = (runtime: Runtime<Config>): string => {
   })
 
   // 2. Holds nobody has answered, newest first.
+  let assessCalls = 0
   holdIds.forEach((holdId, k) => {
     const h = holdRows[k]
     if (!h || Number(h.status) !== HOLD_OPEN) return
@@ -245,13 +251,20 @@ const onCron = (runtime: Runtime<Config>): string => {
       return
     }
 
-    // Remind the parent once, in the minute after the hold has been open for repageAfterSeconds.
+    // Ask the agent for its risk score, then let fixed rules decide whether the parent is reminded now.
     const age = nowSeconds - Number(h.openedAt)
-    if (age >= config.repageAfterSeconds && age < config.repageAfterSeconds + 60) {
+    let risk: Assessment | null = null
+    if (age >= earliestAssessAge(config.repageAfterSeconds) && assessCalls < (config.maxAssessCalls ?? 3)) {
+      assessCalls++
+      const assessed = callAgent(runtime, token, "assess", BigInt(holdId))
+      risk = succeeded(assessed) ? parseAssessment(assessed.detail) : null
+      runtime.log(`Hold ${holdId} assessed: ${risk ? `risk ${risk.riskScore}, reason ${risk.reasonCode}` : "no valid assessment"}`)
+    }
+    if (repageDue(age, config.repageAfterSeconds, config.highRiskScore ?? 70, risk)) {
       const reply = callAgent(runtime, token, "repage", BigInt(holdId))
       if (succeeded(reply) && !reply.detail?.skipped) {
         summary.parentsReminded++
-        audit(AUDIT.HOLD_REPAGED, BigInt(h.familyId), BigInt(holdId), reply.detail)
+        audit(AUDIT.HOLD_REPAGED, BigInt(h.familyId), BigInt(holdId), reply.detail, risk)
         runtime.log(
           `Hold ${holdId} still waiting after ${age}s: parent reminded (classified as script ${reply.detail?.classification?.scriptId ?? "?"})`,
         )

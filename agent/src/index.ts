@@ -86,10 +86,14 @@ type HoldBrief = {
   openedAt: number;
   pagedDevices: number;
   whatsAppLink: string;
+  /** Set when CRE has sent its reminder, so a later run cannot send another. */
+  repagedAt?: number;
   /** Minutes on a call, when the student chose to share it. */
   callDurationMinutes?: number;
   alert: ReturnType<Pager["buildAlert"]>;
 };
+
+import { assessment } from "./cre-assess";
 
 const briefs = new Map<string, HoldBrief>();
 
@@ -547,7 +551,7 @@ const keeper = new Keeper({
  * request does nothing.
  */
 const creApplyBody = z.object({
-  action: z.enum(["runAllowance", "expireHold", "repage"]),
+  action: z.enum(["runAllowance", "expireHold", "repage", "assess"]),
   id: z.union([z.string(), z.number()]),
 });
 
@@ -580,9 +584,16 @@ app.post("/cre/apply", async (request, reply) => {
     return json({ ok: true, txHash: tx.hash, latencyMs: Math.round(tx.latencyMs) });
   }
 
+  if (action === "assess") {
+    const known = briefs.get(String(id));
+    return known ? json({ ok: true, ...assessment(known) }) : json({ ok: true, skipped: "no briefing (the agent restarted)" });
+  }
+
   // repage
   const brief = briefs.get(String(id));
   if (!brief) return json({ ok: true, skipped: "no briefing (the agent restarted)" });
+  if (brief.repagedAt !== undefined) return json({ ok: true, skipped: "already reminded" });
+  brief.repagedAt = Date.now();
   const subs = await relayer<{ subscriptions: PushTarget[] }>(`/subscriptions/${brief.familyId}`);
   const guardians = (subs?.subscriptions ?? []).filter((s) => s.role === "guardian");
   const reminder = { ...brief.alert, title: `Still waiting: ${brief.alert.title}` };
