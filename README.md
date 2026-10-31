@@ -10,8 +10,8 @@ the chain, calls our AI agent, and records its actions in an on-chain audit log.
 | CRE requirement | Where in code | Evidence |
 |---|---|---|
 | Workflow as orchestration layer | [`main.ts`](cre/companion-orchestrator/main.ts) | [Simulation log](docs/evidence/cre-simulate-2026-10-31.log) |
-| Blockchain integration | `EVMClient.callContract`, `writeReport` | Reads are in the log; the audit write has not yet run on a live chain |
-| External system / AI agent | HTTPS `POST /agent/cre/apply` | Recorded in the 12 Oct run ([log](docs/cre-simulation.txt)); not exercised on 31 Oct because nothing was due |
+| Blockchain integration | `EVMClient.callContract`, `writeReport` | Reads are in the log; [audit write on Monad testnet](https://testnet.monadexplorer.com/tx/0x79b146c357c1098b2d7ac834de17b26a0dea76540a367f9b300c1e069a4d6329) from a simulated run ([log](docs/evidence/cre-live-hold-58.log)) |
+| External system / AI agent | HTTPS `POST /agent/cre/apply` | Live hold 58: agent returned risk 75, reason 1, and the reminder succeeded ([log](docs/evidence/cre-live-hold-58.log)) |
 | Simulation or live deployment | CRE CLI | Simulation only; not deployed to the CRE network |
 
 ```mermaid
