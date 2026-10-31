@@ -1,0 +1,28 @@
+✓ Workflow compiled
+✓ Simulation limits enabled
+  HTTP: req=120kb resp=250kb timeout=10s | ConfHTTP: req=125kb resp=500kb timeout=1m30s | Consensus obs=25kb | ChainWrite evm_report=50kb evm_gas=10000000 solana_report=265b solana_cu=300000 | WASM binary=100mb compressed=20mb
+  Binary hash: aa02c4222e2b2bb83e9e4c2b5cbb280735e11ab9326672c857e8e64b4d6ca830
+  Config hash: e8fd75fadae77b6a0a53eeaa01cf0a07f7740d3738d896cabc3d3509c7c5f8ba
+2026-10-31T22:33:36Z [SIMULATION] Simulator Initialized
+
+2026-10-31T22:33:36Z [SIMULATION] Running trigger trigger=cron-trigger@1.0.0
+2026-10-31T22:33:36Z [USER LOG] Read Monad testnet: 20 families, 58 holds
+2026-10-31T22:33:37Z [USER LOG] Checked 20 allowances and 25 recent holds in one read
+2026-10-31T22:33:38Z [USER LOG] Hold 58 assessed: risk 75, reason 1
+2026-10-31T22:33:46Z [USER LOG] Audit write ok: action=1 tx=0x79b146c357c1098b2d7ac834de17b26a0dea76540a367f9b300c1e069a4d6329
+2026-10-31T22:33:46Z [USER LOG] Hold 58 still waiting after 102s: parent reminded (classified as script 1)
+2026-10-31T22:33:46Z [USER LOG] Done: {"families":20,"holds":58,"allowancesSent":0,"holdsExpired":0,"parentsReminded":1,"skipped":0,"failed":0,"audited":1,"auditFailed":0}
+
+✓ Workflow Simulation Result:
+"{\"families\":20,\"holds\":58,\"allowancesSent\":0,\"holdsExpired\":0,\"parentsReminded\":1,\"skipped\":0,\"failed\":0,\"audited\":1,\"auditFailed\":0}"
+
+2026-10-31T22:33:46Z [SIMULATION] Execution finished signal received
+2026-10-31T22:33:46Z [SIMULATION] Skipping WorkflowEngineV2
+Initializing...
+Loading settings...
+Checking RPC connectivity...
+Compiling workflow...
+
+⚠️  Update available! You’re running 1.33.0, but 1.39.0 is the latest.
+Run `cre update` or visit https://github.com/smartcontractkit/cre-cli/releases to upgrade.
+
