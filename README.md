@@ -1,5 +1,3 @@
-> **BLI Legal Tech Hackathon 2 (Chainlink CRE):** see the [submission and evidence](docs/BLI_SUBMISSION.md) and the [legal and consumer protection analysis](docs/LEGAL_AND_CONSUMER_PROTECTION.md). Claimed tracks: LegalTech & RegTech, Web3 for Social Good. Testnet prototype.
-
 # COMPANION(துணை)
 
 **Scammers win by cutting you off from family. Companion makes family your second key, and every family's save protects the next.**
