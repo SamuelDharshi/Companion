@@ -1,0 +1,7 @@
+{
+  "chainId": 10143,
+  "companionAuditLog": "0x4dfddf9d6ca04b7dffd24fb3b6c3f15d5adb1528",
+  "deployTx": "0x901776d6dff43dfc0bb6e021ac688ba2f1dde19d8f027d52554c636e7b54a3cb",
+  "forwarder": "0xB9F79d863261869B234c481D1f9A7af84AeAd192",
+  "forwarderKind": "CRE simulation MockForwarder"
+}

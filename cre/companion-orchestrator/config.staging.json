@@ -5,5 +5,6 @@
   "agentUrl": "https://companion-monad.vercel.app/agent",
   "maxFamilies": 25,
   "maxHolds": 25,
-  "repageAfterSeconds": 120
+  "repageAfterSeconds": 120,
+  "auditLogAddress": "0x4dfddf9d6ca04b7dffd24fb3b6c3f15d5adb1528"
 }
