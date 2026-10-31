@@ -39,7 +39,7 @@ is run by CRE or by its own keeper at submission time.] [TODO: state deployment 
 
 **Tech stack:** Chainlink CRE (TS SDK), Monad testnet, Solidity/Foundry, passkeys (P-256), Node agent, Envio, Alchemy, Next.js
 
-**Links:** GitHub https://github.com/SamuelDharshi/Companion · App https://companion-monad.vercel.app · Video [TODO] ·
+**Links:** GitHub https://github.com/SamuelDharshi/Companion/tree/bli/cre-audit-log · App https://companion-monad.vercel.app · Video [TODO] ·
 Vault https://testnet.monadexplorer.com/address/0xF2BA20FaF5f171DcDB9E7F70a489855d170465C1 · Audit log [TODO]
 
 **Team:** [TODO]
