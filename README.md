@@ -31,7 +31,6 @@ sequenceDiagram
 
 **AI step:** for an open hold, the workflow asks the agent for a risk score and reason code, validates them, reminds the parent sooner when risk is high, and records both in the audit report. The AI can never move money.
 
-the workflow's audit write, the AI risk step, the legal document and fresh evidence.
 
 **Current limit:** the live agent still runs on its own keeper, not on CRE. See [`docs/INITIAL_TECHNICAL_AUDIT.md`](docs/INITIAL_TECHNICAL_AUDIT.md).
 
