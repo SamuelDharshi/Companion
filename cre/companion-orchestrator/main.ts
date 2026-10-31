@@ -9,11 +9,23 @@ import {
   encodeCallMsg,
   getNetwork,
   handler,
+  hexToBase64,
   json,
   ok,
+  TxStatus,
   type Runtime,
 } from "@chainlink/cre-sdk"
-import { decodeFunctionResult, encodeFunctionData, parseAbi, zeroAddress, type Address } from "viem"
+import {
+  decodeFunctionResult,
+  encodeAbiParameters,
+  encodeFunctionData,
+  keccak256,
+  parseAbi,
+  parseAbiParameters,
+  toBytes,
+  zeroAddress,
+  type Address,
+} from "viem"
 import { z } from "zod"
 
 /**
@@ -37,10 +49,12 @@ import { z } from "zod"
  * Face ID. expireHold only ever returns money to the student. repage only sends a notification. A guardian's passkey is
  * the only thing that can release a held payment, and no workflow, ours or anyone's, holds it.
  *
- * Why HTTP and not an onchain write: CRE writes onchain by sending a signed report through a Chainlink forwarder to a
- * contract that implements `onReport`. ThunaiVault does not, and changing a vault that holds family money, days before
- * a deadline, to add a second authority over it is the wrong trade. So reads are onchain and actions go through the
- * agent, which already holds the (authority-free) keeper key.
+ * Why actions go through HTTP: ThunaiVault has no `onReport`, and adding a second authority over a vault that holds
+ * family money is the wrong trade. So the vault is only read, and actions go through the agent, which holds the
+ * authority-free keeper key.
+ *
+ * What CRE does write: when `auditLogAddress` is configured, each completed action is sent as a signed report to
+ * CompanionAuditLog, a separate contract that holds no money and has no power over the vault.
  */
 
 const configSchema = z.object({
@@ -51,10 +65,19 @@ const configSchema = z.object({
   maxFamilies: z.number().int().positive(),
   maxHolds: z.number().int().positive(),
   repageAfterSeconds: z.number().int().positive(),
+  auditLogAddress: z.string().optional(),
+  auditGasLimit: z.string().optional(),
+  maxAuditWrites: z.number().int().nonnegative().optional(),
 })
 type Config = z.infer<typeof configSchema>
 
 const HOLD_OPEN = 1
+// ReceiverContractExecutionStatus.SUCCESS in the EVM capability; the SDK root does not export this enum.
+const RECEIVER_SUCCESS = 0
+
+// Must match CompanionAuditLog.Action.
+const AUDIT = { ALLOWANCE_SENT: 0, HOLD_REPAGED: 1, HOLD_EXPIRED_REFUNDED: 2 } as const
+type AuditAction = (typeof AUDIT)[keyof typeof AUDIT]
 
 const vaultAbi = parseAbi([
   "function familyCount() view returns (uint256)",
@@ -160,10 +183,39 @@ const onCron = (runtime: Runtime<Config>): string => {
     ...holdIds.map((id) => ({ functionName: "hold" as const, args: [BigInt(id)] })),
   ])
   const due = batch.slice(0, familyIds.length) as (boolean | undefined)[]
-  const holdRows = batch.slice(familyIds.length) as ({ status: number; openedAt: bigint; releaseAt: bigint } | undefined)[]
+  const holdRows = batch.slice(familyIds.length) as ({ familyId: bigint; status: number; openedAt: bigint; releaseAt: bigint } | undefined)[]
   runtime.log(`Checked ${familyIds.length} allowances and ${holdIds.length} recent holds in one read`)
 
-  const summary = { families, holds, allowancesSent: 0, holdsExpired: 0, parentsReminded: 0, skipped: 0, failed: 0 }
+  const summary = { families, holds, allowancesSent: 0, holdsExpired: 0, parentsReminded: 0, skipped: 0, failed: 0, audited: 0, auditFailed: 0 }
+
+  /** Records a completed action. A failed audit write is counted and logged; it never undoes or blocks the action. */
+  const audit = (action: AuditAction, familyId: bigint, holdId: bigint, detail: unknown) => {
+    if (!config.auditLogAddress || summary.audited + summary.auditFailed >= (config.maxAuditWrites ?? 3)) return
+    const agentResultHash = keccak256(toBytes(JSON.stringify(detail ?? null)))
+    const payload = encodeAbiParameters(parseAbiParameters("uint8, uint256, uint256, bytes32, uint64"), [
+      action,
+      familyId,
+      holdId,
+      agentResultHash,
+      BigInt(nowSeconds),
+    ])
+    const report = runtime
+      .report({ encodedPayload: hexToBase64(payload), encoderName: "evm", signingAlgo: "ecdsa", hashingAlgo: "keccak256" })
+      .result()
+    const written = evm
+      .writeReport(runtime, {
+        receiver: config.auditLogAddress,
+        report,
+        gasConfig: { gasLimit: config.auditGasLimit ?? "500000" },
+      })
+      .result()
+    const txHash = bytesToHex(written.txHash ?? new Uint8Array(32))
+    // The transaction can succeed while the receiver reverts, so both statuses must pass.
+    const delivered = written.txStatus === TxStatus.SUCCESS && written.receiverContractExecutionStatus === RECEIVER_SUCCESS
+    if (delivered) summary.audited++
+    else summary.auditFailed++
+    runtime.log(`Audit write ${delivered ? "ok" : "FAILED"}: action=${action} tx=${txHash}`)
+  }
 
   // 1. Allowances that are due.
   familyIds.forEach((familyId, k) => {
@@ -172,6 +224,7 @@ const onCron = (runtime: Runtime<Config>): string => {
     if (succeeded(reply) && !reply.detail?.skipped) {
       summary.allowancesSent++
       runtime.log(`Allowance due for family ${familyId}: sent`)
+      audit(AUDIT.ALLOWANCE_SENT, BigInt(familyId), 0n, reply.detail)
     } else if (succeeded(reply)) summary.skipped++
     else summary.failed++
   })
@@ -186,6 +239,7 @@ const onCron = (runtime: Runtime<Config>): string => {
       if (succeeded(reply) && !reply.detail?.skipped) {
         summary.holdsExpired++
         runtime.log(`Hold ${holdId} unanswered past its time: money returned to the student`)
+        audit(AUDIT.HOLD_EXPIRED_REFUNDED, BigInt(h.familyId), BigInt(holdId), reply.detail)
       } else if (succeeded(reply)) summary.skipped++
       else summary.failed++
       return
@@ -197,6 +251,7 @@ const onCron = (runtime: Runtime<Config>): string => {
       const reply = callAgent(runtime, token, "repage", BigInt(holdId))
       if (succeeded(reply) && !reply.detail?.skipped) {
         summary.parentsReminded++
+        audit(AUDIT.HOLD_REPAGED, BigInt(h.familyId), BigInt(holdId), reply.detail)
         runtime.log(
           `Hold ${holdId} still waiting after ${age}s: parent reminded (classified as script ${reply.detail?.classification?.scriptId ?? "?"})`,
         )
