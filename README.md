@@ -1,5 +1,41 @@
 # COMPANION(துணை)
 
+## BLI Legal Tech Hackathon 2: Chainlink "Best workflow with CRE"
+
+*Scammers win by cutting you off from family. Companion makes family your second key, and a Chainlink CRE workflow watches
+the chain, calls our AI agent, and records its actions in an on-chain audit log.*
+
+**Tracks:** LegalTech & RegTech · Web3 for Social Good · AI x Blockchain · **Legal design:** [`docs/LEGAL_AND_CONSUMER_PROTECTION.md`](docs/LEGAL_AND_CONSUMER_PROTECTION.md)
+
+| CRE requirement | Where in code | Evidence |
+|---|---|---|
+| Workflow as orchestration layer | [`main.ts`](cre/companion-orchestrator/main.ts) | [Simulation log](docs/evidence/cre-simulate-2026-10-31.log) |
+| Blockchain integration | `EVMClient.callContract`, `writeReport` | Reads are in the log; the audit write has not yet run on a live chain |
+| External system / AI agent | HTTPS `POST /agent/cre/apply` | Recorded in the 12 Oct run ([log](docs/cre-simulation.txt)); not exercised on 31 Oct because nothing was due |
+| Simulation or live deployment | CRE CLI | Simulation only; not deployed to the CRE network |
+
+```mermaid
+sequenceDiagram
+    participant C as CRE cron
+    participant M as Monad testnet
+    participant A as Companion agent
+    participant L as CompanionAuditLog
+    participant F as Family
+    C->>M: Read families, allowances and holds
+    C->>C: Decide what is due
+    C->>A: POST /agent/cre/apply
+    A->>M: Re-check, then act
+    A-->>F: Page the parent when a reminder is due
+    C->>L: Signed report of the completed action
+```
+
+**Provenance:** built for Monad Metropolis, where it also entered Chainlink's CRE bounty. **New for BLI:** `CompanionAuditLog`,
+the workflow's audit write, the legal document and fresh evidence.
+
+**Current limit:** the live agent still runs on its own keeper, not on CRE. See [`docs/INITIAL_TECHNICAL_AUDIT.md`](docs/INITIAL_TECHNICAL_AUDIT.md).
+
+---
+
 **Scammers win by cutting you off from family. Companion makes family your second key, and every family's save protects the next.**
 
 *Companion* (**Thunai** in Tamil, which means "companion") is a family money agent for Indian parents with a child studying abroad.
